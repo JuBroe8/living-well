@@ -78,18 +78,34 @@ function needsSourceSearch(entry) {
   return !url || entry.quellenqualitaet === 'unbekannt' || !entry.quellenqualitaet;
 }
 
+// Both research-prompt builders below return {systemInstruction, contents}
+// instead of one big system string. Live testing showed the model skipping
+// the googleSearch tool entirely (grounding.used stayed false with no
+// error) when the whole task — including a long "already have this"
+// listing — sat in systemInstruction and the actual user turn (contents)
+// was a short, vague instruction. extract.js's RESEARCH_PROMPT, which
+// reliably triggers real search, keeps systemInstruction to role+mandate
+// and puts the concrete, information-dense task in contents — mirroring
+// that split here instead of guessing why the SDK/model treats the two
+// differently.
+const SEARCH_MANDATE = 'Nutze für diese Aufgabe zwingend die Google-Suche, bevor du antwortest — verlasse dich nicht auf dein Gedächtnis oder auf Vermutungen. Wenn die Suche zu einem Punkt nichts Verlässliches liefert, sag das explizit, statt etwas zu erfinden. Antworte als lesbare Liste in Klartext, kein JSON. Sprache: Deutsch.';
+
 function buildSourceResearchPrompt(personName, items) {
   const lines = items.map((e, i) => {
     const text = e.quote || e.anekdote || e.fakt || e.preview || '';
     return `${i + 1}. [${e.kategorie || 'Eintrag'}] "${String(text).slice(0, 300)}"`;
   }).join('\n');
-  return `Du bist Recherche-Assistent für ein deutsches Sachbuch über ${personName}.
+  return {
+    systemInstruction: `Du bist Recherche-Assistent für ein deutsches Sachbuch. ${SEARCH_MANDATE}`,
+    contents: `Finde für ${personName} zu jedem der folgenden bereits im Bestand vorhandenen, aber noch unbelegten Einträge über die Google-Suche die wahrscheinlichste echte Quelle (Buch, Interview, Artikel, Archiv) und die passende URL:\n\n${lines}\n\nGib für jeden Eintrag (mit derselben Nummer wie oben) die gefundene Quelle und die echte, von der Suche gelieferte URL an.`
+  };
+}
 
-Für die folgenden bereits im Bestand vorhandenen Einträge fehlt noch eine belastbare Quelle. Nutze die Google-Suche, um für JEDEN einzelnen, nummerierten Eintrag die wahrscheinlichste echte Quelle zu finden (Buch, Interview, Artikel, Archiv):
-
-${lines}
-
-Gib für jeden Eintrag (mit derselben Nummer wie oben) an: die gefundene Quelle (Autor/Publikation) und die echte URL, die dir die Suche dafür geliefert hat. Wenn du für einen Eintrag über die Suche keine belastbare Quelle findest, sag das explizit dazu, anstatt eine zu vermuten. Antworte als lesbare, nummerierte Liste in Klartext, kein JSON. Sprache: Deutsch.`;
+function buildExpandResearchPrompt(personName, kategorie, count, existingList) {
+  return {
+    systemInstruction: `Du bist Recherche-Assistent für ein deutsches Sachbuch über Menschen, die ihr Leben radikal nach einer eigenen Idee lebten. ${SEARCH_MANDATE}`,
+    contents: `Finde über die Google-Suche ${count} neue, gut belegte Einträge der Kategorie "${kategorie}" zu ${personName} — mit Inhalt, Quelle und der echten, von der Suche gelieferten URL. Folgendes Material ist bereits vorhanden, wiederhole es nicht, auch nicht umformuliert:\n\n${existingList || '(noch nichts vorhanden)'}`
+  };
 }
 
 function buildExpandPrompt(kategorie, count) {
@@ -254,10 +270,11 @@ module.exports = async function handler(req, res) {
         if (SEARCH_GROUNDING_ENABLED) {
           try {
             const existingList = existing.map((e, i) => `${i + 1}. [${e.kategorie}] ${e.text.slice(0, 150)}`).join('\n');
+            const expandPrompt = buildExpandResearchPrompt(person.name, kategorie, expandCount + 2, existingList);
             const research = await runGroundedResearch({
               ai, model: MODELS[MODELS.length - 1],
-              systemInstruction: `Du recherchierst für ein deutsches Sachbuch über ${person.name}. Finde über die Google-Suche neue, gut belegte Einträge der Kategorie "${kategorie}", die NICHT im bereits vorhandenen Material vorkommen:\n\n${existingList || '(noch nichts vorhanden)'}\n\nGib für jeden Fund den Inhalt, die Quelle und die echte gefundene URL an. Antworte als lesbare Liste in Klartext, kein JSON. Erfinde nichts, was die Suche nicht bestätigt.`,
-              contents: `Person: ${person.name} (${person.dates || 'Daten unbekannt'}, ${person.kategorie || ''}). Finde ${expandCount + 2} neue Kandidaten der Kategorie ${kategorie}.`,
+              systemInstruction: expandPrompt.systemInstruction,
+              contents: expandPrompt.contents,
               requestStartedAt, operation: 'enhance_expand_research'
             });
             grounding = research.grounding;
@@ -309,10 +326,11 @@ module.exports = async function handler(req, res) {
 
       if (SEARCH_GROUNDING_ENABLED && entriesNeedingSources.length) {
         try {
+          const sourcePrompt = buildSourceResearchPrompt(person.name, entriesNeedingSources);
           const research = await runGroundedResearch({
             ai, model: MODELS[MODELS.length - 1],
-            systemInstruction: buildSourceResearchPrompt(person.name, entriesNeedingSources),
-            contents: `Recherchiere Quellen für die ${entriesNeedingSources.length} oben genannten Einträge von ${person.name}.`,
+            systemInstruction: sourcePrompt.systemInstruction,
+            contents: sourcePrompt.contents,
             requestStartedAt, operation: 'enhance_research'
           });
           grounding = research.grounding;
@@ -371,3 +389,5 @@ module.exports = async function handler(req, res) {
 
 module.exports.needsSourceSearch = needsSourceSearch;
 module.exports.buildExpandPrompt = buildExpandPrompt;
+module.exports.buildSourceResearchPrompt = buildSourceResearchPrompt;
+module.exports.buildExpandResearchPrompt = buildExpandResearchPrompt;

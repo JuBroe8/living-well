@@ -401,6 +401,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   <button class="tab" data-tab="persons" onclick="goTab('persons')">Personenpool</button>
   <button class="tab" data-tab="entries" onclick="goTab('entries')">Recherche</button>
   <button class="tab tab-more" data-tab="places" onclick="goTab('places')">Orte</button>
+  <button class="tab tab-more" data-tab="kosten" onclick="goTab('kosten')">Kosten</button>
   <button class="tab tab-add" data-tab="add" onclick="openCapture()">+ Name</button>
   <div class="tab-sep" id="tab-sep"></div>
   <div class="back-btn" id="back-btn" onclick="goTab('persons')">
@@ -590,7 +591,7 @@ function goTab(t) {
   });
   document.getElementById('back-btn').classList.remove('vis');
   document.getElementById('tab-sep').style.display = 'none';
-  document.getElementById('bar').style.display = (t === 'add' || t === 'status' || t === 'pilot') ? 'none' : '';
+  document.getElementById('bar').style.display = (t === 'add' || t === 'status' || t === 'pilot' || t === 'kosten') ? 'none' : '';
   document.getElementById('srch').value = '';
   window.scrollTo(0, 0);
   chips(); render();
@@ -662,6 +663,7 @@ function render() {
   else if (view === 'add')      rAdd(main);
   else if (view === 'status')   rStatus(main);
   else if (view === 'pilot')    rPilot(main);
+  else if (view === 'kosten')   rKosten(main);
   else                          rPlaces(main, s);
 }
 
@@ -2207,8 +2209,8 @@ function rStatus(main) {
         researchJobsHtml(openJobs) +
       '</div>' +
       '<div class="dash-card">' +
-        '<div class="dash-card-hd"><div><div class="dash-card-title">KI-Verbrauch</div><div class="dash-card-note">Token, Modell und geschätzte Grenzkosten pro Lauf; freie Search-Kontingente können die echte Rechnung senken.</div></div></div>' +
-        aiRunsHtml() +
+        '<div class="dash-card-hd"><div><div class="dash-card-title">KI-Kosten &amp; Limits</div><div class="dash-card-note">Tagesbudget, Google-Search-Freikontingent und Lauf-Historie.</div></div><button class="mini-btn" onclick="goTab(\'kosten\')">Öffnen</button></div>' +
+        '<div class="readonly-note">' + formatEuro(totalCost) + ' insgesamt erfasst · zuletzt: ' + (aiRuns.length ? esc(aiRuns[aiRuns.length - 1].operation || '') : '—') + '</div>' +
       '</div>' +
     '</div>';
 
@@ -2284,11 +2286,116 @@ function resumeQueuedResearch() {
     .finally(function() { queueResumeBusy = false; if (view === 'status') render(); setTimeout(resumeQueuedResearch, 50); });
 }
 
-function aiRunsHtml() {
-  if (!aiRuns.length) return '<div class="readonly-note">Noch keine KI-Läufe protokolliert.</div>';
-  return aiRuns.slice(-8).reverse().map(function(x) {
-    return '<div class="cost-row"><span><strong>' + esc(x.operation || 'KI-Lauf') + '</strong><br><span class="readonly-note">' + esc(x.model || '') + ' · ' + Number(x.total_tokens || 0).toLocaleString('de-DE') + ' Token</span></span><span>' + formatEuro(x.estimated_cost_eur || 0) + '</span></div>';
-  }).join('');
+function formatDateDE(isoDay) {
+  var d = new Date(isoDay + 'T00:00:00');
+  return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function formatDateTimeDE(iso) {
+  var d = new Date(iso);
+  return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' }) + ' ' + d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+}
+
+// ── KOSTEN / LIMITS ──────────────────────────────
+// GEMINI_GROUNDING_FREE_MONTHLY mirrors the documented Tier 1 allowance for
+// Gemini 3 models (5,000 grounded prompts/month, shared across models, then
+// billed per search) — see https://ai.google.dev/gemini-api/docs/pricing.
+// RPM/TPM/RPD are intentionally not hardcoded here: Google does not publish
+// a single authoritative per-model table for those (they vary by account/
+// tier and are only reliably visible in AI Studio), so asserting numbers
+// here would risk being quietly wrong. We show recent throughput instead
+// and link to the live source.
+var GEMINI_GROUNDING_FREE_MONTHLY = 5000;
+
+function rKosten(main) {
+  main.innerHTML = '';
+  var wrap = document.createElement('div');
+
+  var now = new Date();
+  var startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var startOfWeek = new Date(startOfToday); startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  var startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  var oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+  function since(d) { return aiRuns.filter(function(r) { return r.created_at && new Date(r.created_at) >= d; }); }
+  function sumCost(list) { return list.reduce(function(s, r) { return s + Number(r.estimated_cost_eur || 0); }, 0); }
+  function sumTokens(list) { return list.reduce(function(s, r) { return s + Number(r.total_tokens || 0); }, 0); }
+  function groundingCount(list) { return list.reduce(function(s, r) { return s + Number((r.pricing && r.pricing.groundingRequests) || 0); }, 0); }
+
+  var today = since(startOfToday), week = since(startOfWeek), month = since(startOfMonth), lastHour = since(oneHourAgo);
+  var groundedThisMonth = groundingCount(month);
+  var groundingPct = Math.min(100, Math.round((groundedThisMonth / GEMINI_GROUNDING_FREE_MONTHLY) * 100));
+
+  var html = '<div class="dash-hero">' +
+    '<div class="dash-title">KI-Kosten &amp; Limits</div>' +
+    '<div class="dash-copy">Aus den bei jedem KI-Lauf protokollierten Token- und Kostenschätzungen berechnet (' + aiRuns.length + ' Läufe insgesamt seit Start).</div>' +
+  '</div>';
+
+  html += '<div class="metric-grid">' +
+    dashMetric(formatEuro(sumCost(today)), 'Heute') +
+    dashMetric(formatEuro(sumCost(week)), 'Diese Woche') +
+    dashMetric(formatEuro(sumCost(month)), 'Diesen Monat') +
+    dashMetric(formatEuro(sumCost(aiRuns)), 'Insgesamt') +
+  '</div>';
+
+  html += '<div class="dash-card" style="margin-bottom:12px">' +
+    '<div class="dash-card-hd"><div><div class="dash-card-title">Google-Search-Freikontingent</div>' +
+      '<div class="dash-card-note">Grounding ist bei den Gemini-3-Modellen im bezahlten Tier bis 5.000 Suchanfragen pro Kalendermonat kostenlos (gemeinsames Kontingent), danach ca. 0,013 € je Anfrage.</div></div></div>' +
+    pipeRow(groundedThisMonth + ' / ' + GEMINI_GROUNDING_FREE_MONTHLY + ' kostenlose Anfragen diesen Monat', groundedThisMonth, GEMINI_GROUNDING_FREE_MONTHLY) +
+    '<div class="readonly-note">' + (groundedThisMonth < GEMINI_GROUNDING_FREE_MONTHLY
+      ? (GEMINI_GROUNDING_FREE_MONTHLY - groundedThisMonth) + ' kostenlose Suchanfragen diesen Monat noch übrig.'
+      : 'Kostenloses Kontingent diesen Monat aufgebraucht — weitere Suchanfragen werden berechnet.') + '</div>' +
+  '</div>';
+
+  html += '<div class="dash-card" style="margin-bottom:12px">' +
+    '<div class="dash-card-hd"><div><div class="dash-card-title">Auslastung — letzte 60 Minuten</div>' +
+      '<div class="dash-card-note">Google veröffentlicht RPM/TPM/RPD nicht als feste Tabelle pro Modell — die genauen Werte hängen von Konto und Tier ab. Live-Stand: <a class="subtle-link" href="https://aistudio.google.com/rate-limit" target="_blank" rel="noopener">AI Studio Rate Limits</a>. Diese Kennzahlen zeigen zumindest, wie stark diese App gerade sendet.</div></div></div>' +
+    '<div class="metric-grid">' +
+      dashMetric(lastHour.length, 'Anfragen') +
+      dashMetric(sumTokens(lastHour).toLocaleString('de-DE'), 'Token') +
+    '</div>' +
+  '</div>';
+
+  var byModel = {};
+  aiRuns.forEach(function(r) {
+    var k = r.model || 'unbekannt';
+    if (!byModel[k]) byModel[k] = { n: 0, tokens: 0, cost: 0 };
+    byModel[k].n += 1; byModel[k].tokens += Number(r.total_tokens || 0); byModel[k].cost += Number(r.estimated_cost_eur || 0);
+  });
+  html += '<div class="sv-sec-hd">Nach Modell</div>';
+  html += '<div class="sv-tbl-wrap" style="overflow-x:auto"><table class="sv-tbl"><thead><tr><th>Modell</th><th class="sv-center">Läufe</th><th class="sv-center">Token</th><th class="sv-center">Kosten</th></tr></thead><tbody>' +
+    (Object.keys(byModel).length ? Object.keys(byModel).map(function(k) {
+      var m = byModel[k];
+      return '<tr><td>' + esc(k) + '</td><td class="sv-cell">' + m.n + '</td><td class="sv-cell">' + m.tokens.toLocaleString('de-DE') + '</td><td class="sv-cell">' + formatEuro(m.cost) + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="readonly-note">Noch keine Daten.</td></tr>') +
+  '</tbody></table></div>';
+
+  var byDay = {};
+  aiRuns.forEach(function(r) {
+    if (!r.created_at) return;
+    var day = String(r.created_at).slice(0, 10);
+    if (!byDay[day]) byDay[day] = { n: 0, tokens: 0, cost: 0, grounding: 0 };
+    byDay[day].n += 1; byDay[day].tokens += Number(r.total_tokens || 0); byDay[day].cost += Number(r.estimated_cost_eur || 0);
+    byDay[day].grounding += Number((r.pricing && r.pricing.groundingRequests) || 0);
+  });
+  var days = Object.keys(byDay).sort().reverse().slice(0, 14);
+  html += '<div class="sv-sec-hd">Letzte 14 Tage</div>';
+  html += '<div class="sv-tbl-wrap" style="overflow-x:auto"><table class="sv-tbl"><thead><tr><th>Datum</th><th class="sv-center">Läufe</th><th class="sv-center">Token</th><th class="sv-center">Suchanfragen</th><th class="sv-center">Kosten</th></tr></thead><tbody>' +
+    (days.length ? days.map(function(d) {
+      var m = byDay[d];
+      return '<tr><td>' + esc(formatDateDE(d)) + '</td><td class="sv-cell">' + m.n + '</td><td class="sv-cell">' + m.tokens.toLocaleString('de-DE') + '</td><td class="sv-cell">' + m.grounding + '</td><td class="sv-cell">' + formatEuro(m.cost) + '</td></tr>';
+    }).join('') : '<tr><td colspan="5" class="readonly-note">Noch keine Daten.</td></tr>') +
+  '</tbody></table></div>';
+
+  html += '<div class="sv-sec-hd">Letzte Läufe</div>';
+  html += '<div class="queue-list">' + (aiRuns.length ? aiRuns.slice(-25).reverse().map(function(x) {
+    var statusPill = x.status === 'failed' ? ' <span class="pill pill-w">Fehlgeschlagen</span>' : '';
+    return '<div class="cost-row"><span><strong>' + esc(x.operation || 'KI-Lauf') + '</strong>' + statusPill + '<br>' +
+      '<span class="readonly-note">' + esc(x.model || '') + ' · ' + Number(x.total_tokens || 0).toLocaleString('de-DE') + ' Token' + (x.created_at ? ' · ' + esc(formatDateTimeDE(x.created_at)) : '') + '</span></span>' +
+      '<span>' + formatEuro(x.estimated_cost_eur || 0) + '</span></div>';
+  }).join('') : '<div class="readonly-note">Noch keine KI-Läufe protokolliert.</div>') + '</div>';
+
+  wrap.innerHTML = html;
+  main.appendChild(wrap);
 }
 
 function dashMetric(n, l) {

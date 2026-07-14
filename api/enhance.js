@@ -170,7 +170,12 @@ function compactPerson(person) {
   };
 }
 
-async function generateWithModelFallback(ai, request) {
+// parseAndValidate(result) must return the parsed data or throw. A parse/
+// shape failure is treated as retryable too — gemini-3.5-flash occasionally
+// returns truncated or malformed JSON, and the whole point of keeping
+// gemini-3.1-flash-lite as a second model is to recover from exactly that,
+// not just from HTTP-level rate limits.
+async function generateWithModelFallback(ai, request, parseAndValidate) {
   let lastErr;
   for (const model of MODELS) {
     try {
@@ -179,11 +184,13 @@ async function generateWithModelFallback(ai, request) {
         { ...request, model },
         model === 'gemini-3.5-flash' ? 1 : 3
       );
-      return { result, model };
+      const data = parseAndValidate(result);
+      return { result, model, data };
     } catch (err) {
       lastErr = err;
       const message = err && err.message ? err.message : '';
-      const mayFallback = message.includes('429')
+      const mayFallback = err.isParseError
+        || message.includes('429')
         || message.includes('503')
         || message.includes('quota')
         || message.includes('UNAVAILABLE')
@@ -192,6 +199,23 @@ async function generateWithModelFallback(ai, request) {
     }
   }
   throw lastErr;
+}
+
+function parseJsonOrThrow(result, validate) {
+  let data;
+  try {
+    data = JSON.parse(result.text);
+  } catch (parseErr) {
+    const err = new Error('Ungültiges JSON von Gemini: ' + parseErr.message);
+    err.isParseError = true;
+    throw err;
+  }
+  if (!validate(data)) {
+    const err = new Error('Unerwartetes Antwortformat von Gemini');
+    err.isParseError = true;
+    throw err;
+  }
+  return data;
 }
 
 module.exports = async function handler(req, res) {
@@ -257,24 +281,14 @@ module.exports = async function handler(req, res) {
             responseMimeType: 'application/json',
             temperature: 0.6
           }
-        });
-        const { result, model } = generated;
+        }, (result) => parseJsonOrThrow(result, (d) => Array.isArray(d.entries)));
+        const { result, model, data } = generated;
         usages.push(calculateUsage({
           usageMetadata: result.usageMetadata, model, operation: 'enhance_expand',
           durationMs: Date.now() - requestStartedAt
         }));
         const usage = mergeUsage(usages);
         recordUsage(usage);
-
-        let data;
-        try {
-          data = JSON.parse(result.text);
-        } catch (parseErr) {
-          return res.status(500).json({ error: 'Ungültiges JSON von Gemini: ' + parseErr.message, _meta: { usage, grounding } });
-        }
-        if (!Array.isArray(data.entries)) {
-          return res.status(500).json({ error: 'Unerwartetes Antwortformat von Gemini', _meta: { usage, grounding } });
-        }
 
         data.entries = data.entries.slice(0, expandCount).map((entry) => {
           const safe = { ...entry, kategorie };
@@ -321,8 +335,8 @@ module.exports = async function handler(req, res) {
           responseMimeType: 'application/json',
           temperature: 0.35
         }
-      });
-      const { result, model } = generated;
+      }, (result) => parseJsonOrThrow(result, (d) => d.person && Array.isArray(d.entries)));
+      const { result, model, data } = generated;
 
       usages.push(calculateUsage({
         usageMetadata: result.usageMetadata, model, operation: 'enhance',
@@ -330,16 +344,6 @@ module.exports = async function handler(req, res) {
       }));
       const usage = mergeUsage(usages);
       recordUsage(usage);
-
-      let data;
-      try {
-        data = JSON.parse(result.text);
-      } catch (parseErr) {
-        return res.status(500).json({ error: 'Ungültiges JSON von Gemini: ' + parseErr.message, _meta: { usage } });
-      }
-      if (!data.person || !Array.isArray(data.entries)) {
-        return res.status(500).json({ error: 'Unerwartetes Antwortformat von Gemini', _meta: { usage } });
-      }
 
       // AI research is a proposal, never a human verification decision.
       data.entries = data.entries.map((entry) => {

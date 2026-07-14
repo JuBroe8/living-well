@@ -2,8 +2,7 @@ const { GoogleGenAI } = require('@google/genai');
 const { calculateUsage, recordUsage } = require('./ai-usage');
 
 // The frequent name-to-dossier workflow uses the free-tier model with the
-// highest daily allowance. Search grounding stays off until this Google
-// project has a non-zero Gemini 3 Search quota.
+// highest daily allowance.
 const MODEL = 'gemini-3.1-flash-lite';
 const SEARCH_GROUNDING_ENABLED = process.env.GEMINI_ENABLE_SEARCH_GROUNDING === 'true';
 
@@ -137,6 +136,24 @@ Weitere Regeln:
 - Niemals Quellen oder URLs erfinden oder raten — lieber leer lassen als halluzinieren
 - lebensprinzip, buchthese, archetyp, spannung und visuelles_motiv sind kuratorische Vorschläge, keine Faktenbehauptungen`;
 
+// Gemini does not reliably combine tools (googleSearch) with
+// responseMimeType: 'application/json' in one call — the JSON constraint
+// wins and the search tool is silently skipped, so quelle_url ends up being
+// reconstructed from training memory rather than a live search. This prompt
+// runs as a separate, ungrounded-format research pass so the search tool
+// actually fires; its plain-text findings + real source URLs are then fed
+// into the normal JSON-structuring call.
+const RESEARCH_PROMPT = `Du bist Recherche-Assistent für ein deutsches Sachbuch mit dem Arbeitstitel "Living Well" (Porträts von Menschen, die ihr Leben radikal nach einer eigenen Idee lebten — mit ihrer Inspiration, ihren Widersprüchen und ihrem Preis).
+
+Nutze die Google-Suche, um zur genannten Person konkrete, gut belegte Anekdoten (mit Ort, Zeit, Ablauf), wörtliche Zitate, überraschende Fakten und bekannte Gewohnheiten/Rituale zu finden.
+
+Gib für jeden Fund an:
+- den Inhalt möglichst konkret und wörtlich
+- die Quelle (Autor, Werk, Publikation, Datum)
+- die echte URL, die dir die Suche dafür geliefert hat
+
+Antworte als lesbare Liste in Klartext, kein JSON. Erfinde niemals eine Quelle oder URL — wenn du zu einem Fund über die Suche keine belastbare Quelle findest, sag das explizit dazu, anstatt eine zu vermuten. Sprache: Deutsch.`;
+
 async function fetchUrl(url) {
   try {
     const res = await fetch(url, {
@@ -197,6 +214,36 @@ function groundingSummary(result) {
   return { used: sources.length > 0, sources, queries: metadata.webSearchQueries || [] };
 }
 
+function sumField(list, key) {
+  let total = 0;
+  for (const u of list) {
+    if (u[key] === null || u[key] === undefined) return null;
+    total += u[key];
+  }
+  return total;
+}
+
+// Combines the research-call and structuring-call usage into a single
+// ai_runs row so a grounded extract still shows up as one cost line, not two.
+function mergeUsage(usages) {
+  const valid = usages.filter(Boolean);
+  if (!valid.length) return null;
+  if (valid.length === 1) return valid[0];
+  return {
+    operation: 'extract',
+    model: valid[valid.length - 1].model,
+    promptTokens: sumField(valid, 'promptTokens'),
+    outputTokens: sumField(valid, 'outputTokens'),
+    thinkingTokens: sumField(valid, 'thinkingTokens'),
+    totalTokens: sumField(valid, 'totalTokens'),
+    groundingRequests: valid.reduce((acc, u) => acc + (u.groundingRequests || 0), 0),
+    estimatedCostUsd: sumField(valid, 'estimatedCostUsd'),
+    estimatedCostEur: sumField(valid, 'estimatedCostEur'),
+    durationMs: valid.reduce((acc, u) => acc + (u.durationMs || 0), 0),
+    pricing: valid[valid.length - 1].pricing
+  };
+}
+
 async function generateWithTransientRetry(ai, request) {
   let lastErr;
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -255,28 +302,52 @@ module.exports = async function handler(req, res) {
   for (const key of apiKeys) {
     try {
       const ai = new GoogleGenAI({ apiKey: key });
+      const usages = [];
+      let structuringInput = enrichedInput;
+      let grounding = { used: false, sources: [], queries: [] };
 
-      const config = {
-        systemInstruction: systemPrompt,
-        responseMimeType: 'application/json',
-        temperature: 0.55
-      };
-      if (SEARCH_GROUNDING_ENABLED) config.tools = [{ googleSearch: {} }];
+      if (SEARCH_GROUNDING_ENABLED) {
+        try {
+          const researchResult = await generateWithTransientRetry(ai, {
+            model: MODEL,
+            contents: enrichedInput,
+            config: { systemInstruction: RESEARCH_PROMPT, tools: [{ googleSearch: {} }], temperature: 0.3 }
+          });
+          grounding = groundingSummary(researchResult);
+          usages.push(calculateUsage({
+            usageMetadata: researchResult.usageMetadata,
+            model: MODEL,
+            operation: 'extract_research',
+            durationMs: Date.now() - requestStartedAt,
+            groundingRequestCount: grounding.used ? Math.max(1, grounding.queries.length) : 0
+          }));
+          const sourceList = grounding.sources
+            .filter((s) => s.url)
+            .map((s, i) => `${i + 1}. ${s.title || s.url} — ${s.url}`)
+            .join('\n');
+          structuringInput = enrichedInput
+            + `\n\n--- RECHERCHE-ERGEBNISSE (per Google-Suche gefunden) ---\n${researchResult.text || ''}`
+            + (sourceList
+              ? `\n\n--- ECHTE, DURCH SUCHE BESTÄTIGTE QUELLEN-URLS (für quelle_url ausschließlich diese verwenden, keine neuen erfinden) ---\n${sourceList}`
+              : '');
+        } catch (researchErr) {
+          console.warn('Grounded research step failed, falling back to ungrounded structuring:', researchErr.message);
+        }
+      }
 
       const result = await generateWithTransientRetry(ai, {
         model: MODEL,
-        contents: enrichedInput,
-        config
+        contents: structuringInput,
+        config: { systemInstruction: systemPrompt, responseMimeType: 'application/json', temperature: 0.55 }
       });
 
-      const grounding = groundingSummary(result);
-      const usage = calculateUsage({
+      usages.push(calculateUsage({
         usageMetadata: result.usageMetadata,
         model: MODEL,
         operation: 'extract',
-        durationMs: Date.now() - requestStartedAt,
-        groundingRequestCount: grounding.used ? Math.max(1, grounding.queries.length) : 0
-      });
+        durationMs: Date.now() - requestStartedAt
+      }));
+      const usage = mergeUsage(usages);
       recordUsage(usage);
 
       let data;
@@ -317,3 +388,4 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports.buildSourceExamplesBlock = buildSourceExamplesBlock;
+module.exports.mergeUsage = mergeUsage;

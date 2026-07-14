@@ -1314,6 +1314,7 @@ function valueFromControl(id, f) {
   if (f.key === 'quellenqualitaet') return cleanChoice(raw, QUELLENQUALITAET, 'unbekannt');
   if (f.key === 'buchreife') return cleanChoice(raw, BUCHREIFE, 'roh');
   if (f.key === 'seitenrolle') return cleanChoice(raw, SEITENROLLE, 'unentschieden');
+  if (f.key === 'quelle_url') return normalizeUrl(raw);
   return raw;
 }
 
@@ -1700,6 +1701,20 @@ function esc(s) {
 
 function label(v) { return LABEL[v] || v; }
 function hasText(v) { return !!String(v || '').trim(); }
+
+// Both AI suggestions and manual entry save a quelle_url straight into
+// <a href>. A bare domain like "rogerebert.com" is a valid-looking string
+// but resolves as a relative link (→ 404 on this app's own domain) rather
+// than an error, so it silently produces a dead source link. Prepend
+// https:// when the value looks like a bare host; leave anything else
+// (already-schemed URLs, empty, or clearly not a URL) untouched.
+function normalizeUrl(u) {
+  var s = String(u || '').trim();
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return s;
+  if (/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+([/?#].*)?$/i.test(s)) return 'https://' + s;
+  return s;
+}
 function arr(v) {
   if (Array.isArray(v)) return v.filter(function(x) { return x !== null && x !== undefined && String(x).trim() !== ''; });
   if (!v) return [];
@@ -1951,7 +1966,7 @@ function entryPayload(e) {
     kategorie: kat,
     buch: e.buch || 'hintergrund',
     quelle: e.quelle || null,
-    quelle_url: e.quelle_url || null,
+    quelle_url: normalizeUrl(e.quelle_url) || null,
     tags: arr(e.tags),
     preview: text.slice(0, 120),
     staerke: e.staerke ? Number(e.staerke) : null,

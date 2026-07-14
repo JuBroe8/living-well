@@ -357,6 +357,11 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   .tab { min-width: 0; flex: 1; padding: 12px 4px 10px; font-size: 8px; min-height: 52px; letter-spacing: .04em }
   .tab-more { display: none }
   .tab-add { margin-left: 0; color: #fff }
+  /* The back button duplicates the highlighted "Personenpool" tab's own
+     onclick (goTab('persons')) — on mobile there isn't room for both in
+     the fixed bottom bar without the tab labels overlapping, so keep only
+     the tab; it's the same action. */
+  .back-btn, .tab-sep { display: none !important }
   .bar { top: 0; padding-top: 8px; padding-bottom: 8px }
   .bar-in { flex-wrap: wrap; overflow-x: visible }
   .srch-wrap { min-width: 0; flex: 1 1 100% }
@@ -370,7 +375,8 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   .profile-dates-line { font-size: 14px }
   .profile-hd, .profile-bio { padding: 16px 18px }
   .profile-hd-top, .add-row { flex-direction: column }
-  .curation-grid, .entry-curation, .form-grid, .form-grid.three, .dash-grid, .metric-grid, .review-fields, .fit-grid { grid-template-columns: 1fr }
+  .curation-grid, .entry-curation, .form-grid, .form-grid.three, .dash-grid, .review-fields, .fit-grid { grid-template-columns: 1fr }
+  .metric-grid { grid-template-columns: repeat(2, 1fr) }
   .review-row { grid-template-columns: 24px 1fr }
   .review-row .review-label { grid-column: 2 }
   .pilot-hero { padding: 23px 20px }
@@ -492,6 +498,7 @@ var LABEL = {
   parked: 'Parken'
 };
 var profileEdit = false;
+var fitPanelExpanded = false;
 var enhanceState = { phase: 'idle', personName: '', data: null, error: '' };
 var TAG_THEME_RULES = {
   Arbeit: ['arbeit','werk','beruf','job','routine','schreibtisch','karriere','bankbeamter','atelier'],
@@ -603,7 +610,7 @@ function openCapture() {
 }
 
 function showProfile(p) {
-  view = 'profile'; profilePerson = p; profileEdit = false;
+  view = 'profile'; profilePerson = p; profileEdit = false; fitPanelExpanded = false;
   document.querySelectorAll('.tab').forEach(function(x) {
     x.classList.toggle('on', x.dataset.tab === 'persons');
   });
@@ -2150,6 +2157,17 @@ function rPilot(main) {
   main.appendChild(wrap);
 }
 
+// True only when nothing has been entered yet — a partially-filled fit
+// (some criteria scored, a rationale started, moved off "pool") stays
+// expanded even though fitScore() is still null until all six are set.
+function candidateUntouched(c) {
+  return FIT_FIELDS.every(function(f) { return c[f[0]] === null || c[f[0]] === undefined; })
+    && !hasText(c.rationale)
+    && (!c.stage || c.stage === 'pool');
+}
+
+function expandFitPanel() { fitPanelExpanded = true; render(); }
+
 function renderFitPanel(p) {
   var book = activeBook(), c = candidateFor(p), panel = document.createElement('section');
   panel.className = 'fit-panel';
@@ -2161,7 +2179,12 @@ function renderFitPanel(p) {
     panel.innerHTML = '<div class="fit-head"><div><div class="dash-card-title">Pilotband-Passung</div><div class="dash-card-note">Die Person bleibt im Pool, bis sie für den Pilotband geprüft wird.</div></div><button class="mini-btn primary" onclick="addToPilot()">Für Pilot prüfen</button></div>';
     return panel;
   }
-  var score = fitScore(c), d = dossierModel(p);
+  var d = dossierModel(p);
+  if (candidateUntouched(c) && !fitPanelExpanded) {
+    panel.innerHTML = '<div class="fit-head"><div><div class="dash-card-title">Passung für den Pilotband</div><div class="dash-card-note">Noch nicht bewertet · Dossier ' + d.count + '/8</div></div><button class="mini-btn primary" onclick="expandFitPanel()">Jetzt bewerten</button></div>';
+    return panel;
+  }
+  var score = fitScore(c);
   var fields = FIT_FIELDS.map(function(f) {
     var current = c[f[0]] === null || c[f[0]] === undefined ? '' : String(c[f[0]]);
     return '<div class="fit-field"><label for="fit-' + f[0] + '">' + esc(f[1]) + '</label><select id="fit-' + f[0] + '">' + opts(['','0','1','2'], current) + '</select></div>';

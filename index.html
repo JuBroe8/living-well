@@ -2026,7 +2026,7 @@ function rPilot(main) {
     '<p class="pilot-thesis">„' + esc(book.thesis || PILOT_THESIS) + '“</p>' +
     '<p class="pilot-note">Der Personenpool bleibt offen. Hier wird nur entschieden, wer für diesen Band trägt.</p>' +
   '</section>' +
-  '<div class="metric-grid">' + dashMetric(persons.length, 'Personen im Pool') + dashMetric(evaluated, 'Bewertet') + dashMetric(shortlist, 'Shortlist') + dashMetric(selected, 'Im Pilot') + '</div>' +
+  '<div class="metric-grid">' + dashMetric(candidates.length, 'Im Workflow') + dashMetric(evaluated, 'Bewertet') + dashMetric(shortlist, 'Shortlist') + dashMetric(selected, 'Im Pilot') + '</div>' +
   '<div class="pilot-board">';
   CANDIDATE_STAGES.forEach(function(stage) {
     var list = candidates.filter(function(c) { return c.stage === stage; }).sort(function(a,b) { return fitScore(b) - fitScore(a); });
@@ -2120,9 +2120,9 @@ function rStatus(main) {
       '<div class="actions" style="margin-top:14px"><button class="mini-btn primary" onclick="openCapture()">+ Namen erfassen</button><button class="mini-btn" onclick="goTab(\'pilot\')">Pilotband öffnen</button></div>' +
     '</div>' +
     '<div class="metric-grid">' +
-      dashMetric(persons.length, 'Personen im Pool') +
+      dashMetric(highWork.length, 'Brauchen Dossierarbeit') +
       dashMetric(openJobs.length, 'Recherche offen') +
-      dashMetric(openSourceCount(), 'Quellen offen') +
+      dashMetric(topCandidates.length, 'Pilot-Fits bewertet') +
       dashMetric(formatEuro(totalCost), 'KI-Kosten erfasst') +
     '</div>' +
     '<div class="dash-grid">' +

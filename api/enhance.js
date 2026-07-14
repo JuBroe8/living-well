@@ -265,7 +265,7 @@ module.exports = async function handler(req, res) {
             researchNote = `\n\n--- RECHERCHE-ERGEBNISSE (per Google-Suche gefunden) ---\n${research.findingsText}`
               + (research.sourceListText ? `\n\n--- ECHTE, DURCH SUCHE BESTÄTIGTE QUELLEN-URLS (ausschließlich diese für quelle_url verwenden) ---\n${research.sourceListText}` : '');
           } catch (researchErr) {
-            console.warn('Grounded expand research failed, falling back to ungrounded structuring:', researchErr.message);
+            console.warn('Grounded expand research failed, falling back to ungrounded structuring:', researchErr.message); grounding.error = researchErr.message;
           }
         }
 
@@ -319,7 +319,7 @@ module.exports = async function handler(req, res) {
           usages.push(research.usage);
           effectiveContext += `\n\nECHTE, DURCH SUCHE GEFUNDENE QUELLEN FÜR EINTRÄGE MIT FEHLENDER QUELLE (Zuordnung über Inhalt, ausschließlich diese URLs verwenden, keine neuen erfinden):\n${research.findingsText}`;
         } catch (researchErr) {
-          console.warn('Grounded enhance research failed, falling back to ungrounded curation:', researchErr.message);
+          console.warn('Grounded enhance research failed, falling back to ungrounded curation:', researchErr.message); grounding.error = researchErr.message;
         }
       }
 

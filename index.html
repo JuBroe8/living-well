@@ -1,0 +1,2818 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Living Well — Wissensdatenbank</title>
+<style>
+:root {
+  --bg:  #f7f5f1;
+  --bg2: #f0ede8;
+  --wh:  #ffffff;
+  --br:  #e2ddd7;
+  --br2: #c8c4be;
+  --tx:  #141414;
+  --t2:  #4a4a4a;
+  --t3:  #8a8a8a;
+  --gn:  #2d6a4f;
+  --am:  #9a7200;
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans:  -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --r: 8px;
+  --sh: 0 1px 4px rgba(0,0,0,.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0 }
+body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-size: 14px; line-height: 1.5 }
+
+/* ── HEADER ── */
+.hdr { background: var(--tx); color: var(--bg); padding: 1.5rem 2rem 1.25rem }
+.hdr-in { max-width: 1140px; margin: 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap }
+.kicker { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: #666; margin-bottom: 5px }
+.logo { font-family: var(--serif); font-size: 26px; font-weight: 400; letter-spacing: -.02em; line-height: 1 }
+.tagline { font-size: 12px; color: #555; margin-top: 6px }
+.hstats { display: flex; gap: 24px; flex-wrap: wrap; padding-top: 2px }
+.hstat { text-align: right }
+.hstat-n { font-size: 28px; font-weight: 200; color: #d0d0d0; line-height: 1; letter-spacing: -.03em }
+.hstat-l { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: #555; margin-top: 2px }
+
+/* ── TABS ── */
+.tabs { background: #1a1a1a; padding: 0 2rem }
+.tabs-in { max-width: 1140px; margin: 0 auto; display: flex; align-items: center; overflow-x: auto; scrollbar-width: none }
+.tabs-in::-webkit-scrollbar { display: none }
+.tab { appearance: none; background: transparent; font-family: inherit; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; padding: 11px 16px; cursor: pointer; color: #777; border: 0; border-bottom: 2px solid transparent; transition: all .15s; user-select: none; white-space: nowrap }
+.tab:hover { color: #999 }
+.tab.on { color: #e8e8e8; border-bottom-color: #e8e8e8 }
+.tab:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #b98a1d; outline-offset: 2px }
+.tab-add { margin-left: auto; color: #eee; font-weight: 700 }
+.tab-sep { width: 1px; background: #333; height: 18px; align-self: center; margin: 0 6px; display: none }
+.back-btn { font-size: 11px; color: #555; cursor: pointer; padding: 11px 14px; transition: color .15s; display: none; align-items: center; gap: 6px; letter-spacing: .03em }
+.back-btn:hover { color: #ccc }
+.back-btn.vis { display: flex }
+.back-arrow { font-size: 13px }
+
+/* ── FILTER BAR ── */
+.bar { background: var(--wh); border-bottom: 1px solid var(--br); padding: 10px 2rem; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,.05) }
+.bar-in { max-width: 1140px; margin: 0 auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+.srch-wrap { position: relative; flex: 1; min-width: 180px }
+.srch-ico { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #aaa; font-size: 12px; pointer-events: none }
+.srch { width: 100%; padding: 7px 14px 7px 30px; border: 1px solid var(--br2); border-radius: 20px; font-size: 13px; background: var(--bg); outline: none; color: var(--tx); transition: border .15s }
+.srch:focus { border-color: var(--tx); background: var(--wh) }
+.chip { font-size: 11px; padding: 4px 11px; border: 1px solid var(--br2); border-radius: 20px; background: transparent; cursor: pointer; color: var(--t2); transition: all .12s; white-space: nowrap; user-select: none }
+.chip:hover { border-color: #999; color: var(--tx) }
+.chip.on { background: var(--tx); color: var(--bg); border-color: var(--tx) }
+.csep { width: 1px; background: var(--br); align-self: stretch; margin: 0 4px; flex-shrink: 0 }
+.cnt { font-size: 12px; color: var(--t3); margin-left: auto; white-space: nowrap }
+
+/* ── MAIN ── */
+.main { max-width: 1140px; margin: 0 auto; padding: 1.5rem 2rem 5rem }
+
+/* ── PILOTBAND ── */
+.pilot-hero { background: #171715; color: #f6f1e8; border-radius: 12px; padding: 30px 32px; margin-bottom: 14px }
+.pilot-kicker { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: #9d998f; margin-bottom: 12px }
+.pilot-title { font-family: var(--serif); font-size: clamp(28px, 4vw, 46px); font-weight: 400; line-height: 1.06; letter-spacing: -.03em; max-width: 760px }
+.pilot-thesis { font-family: var(--serif); font-size: 17px; line-height: 1.7; max-width: 840px; color: #d8d2c7; margin-top: 18px }
+.pilot-note { color: #8e887e; font-size: 12px; margin-top: 16px }
+.pilot-board { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; align-items: start }
+.pilot-col { background: #eeebe5; border: 1px solid var(--br); border-radius: var(--r); padding: 10px; min-height: 190px }
+.pilot-col-hd { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 9px; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--t3); font-weight: 700 }
+.candidate-card { width: 100%; text-align: left; font-family: inherit; background: var(--wh); border: 1px solid var(--br); border-radius: 7px; padding: 11px 12px; margin-bottom: 6px; cursor: pointer; color: var(--tx) }
+.candidate-card:hover { border-color: #aaa; box-shadow: var(--sh) }
+.candidate-name { font-size: 13px; font-weight: 700 }
+.candidate-meta { font-size: 11px; color: var(--t3); margin-top: 3px; line-height: 1.45 }
+.fit-pill { display: inline-flex; margin-top: 7px; font-size: 10px; border-radius: 20px; padding: 3px 8px; background: var(--bg2); color: var(--t2) }
+.fit-pill.strong { background: #eef6f1; color: var(--gn) }
+.fit-panel { background: #f5f1e8; border: 1px solid #ded4be; border-radius: var(--r); padding: 20px 22px; margin-bottom: 20px }
+.fit-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 14px }
+.fit-score { font-family: var(--serif); font-size: 28px; white-space: nowrap }
+.fit-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 9px }
+.fit-field { background: rgba(255,255,255,.65); border: 1px solid #ded4be; border-radius: 6px; padding: 9px 10px }
+.fit-field label { display: block; font-size: 10px; line-height: 1.35; color: var(--t2); margin-bottom: 5px }
+.fit-field select { width: 100%; border: 1px solid var(--br2); background: #fff; border-radius: 5px; padding: 6px }
+.dossier-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px }
+.dossier-check { font-size: 10px; padding: 3px 8px; border-radius: 20px; background: #eef6f1; color: var(--gn) }
+.dossier-check.miss { background: #fdf0ee; color: #a33124 }
+.cost-row { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--br); padding: 9px 0; font-size: 12px }
+
+/* ── PERSON CARDS (grid) ── */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px }
+.pc { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 14px 16px; cursor: pointer; transition: border-color .12s, box-shadow .12s }
+.pc:hover { border-color: #bbb; box-shadow: var(--sh); transform: translateY(-1px) }
+.pc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px }
+.pc-name { font-size: 14px; font-weight: 600; line-height: 1.3 }
+.sdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px }
+.dc { background: var(--gn) }
+.dr { background: var(--am) }
+.dm { background: #aaa }
+.pc-role { font-size: 11px; color: var(--t3); margin-top: 3px; font-style: italic }
+.pc-dates { font-size: 11px; color: var(--t3); margin-top: 1px }
+.pc-ec { font-size: 10px; color: var(--t3); background: var(--bg2); border: 1px solid var(--br); border-radius: 10px; padding: 2px 8px; margin-top: 9px; display: inline-block }
+.pc-ec.has { color: var(--gn); background: #eef6f1; border-color: #b8d8c8 }
+.pc-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px }
+
+/* ── PILLS ── */
+.pill { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; border-radius: 10px; padding: 2px 8px; border: 1px solid var(--br2); color: var(--t3); white-space: nowrap }
+.pill-d { background: var(--gn); border-color: var(--gn); color: #fff }
+.pill-h { background: #888; border-color: #888; color: #fff }
+.pill-w { background: #fdf0ee; border-color: #e0b0aa; color: #a33124 }
+.pill-s { background: #eef6f1; border-color: #b8d8c8; color: var(--gn) }
+.pill-q { background: #f5f0e5; border-color: #e8d9a0; color: #7a5800 }
+
+/* ── EDIT / CURATION CONTROLS ── */
+.mini-btn { background: transparent; color: var(--t2); border: 1px solid var(--br2); padding: 6px 11px; border-radius: 6px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: all .15s; font-weight: 600 }
+.mini-btn:hover { border-color: #999; color: var(--tx); background: var(--wh) }
+.mini-btn.primary { background: var(--tx); color: var(--bg); border-color: var(--tx) }
+.mini-btn.danger { color: #c0392b; border-color: #e0b0aa }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
+.form-grid.one { grid-template-columns: 1fr }
+.form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+.checkgrid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px }
+.checkchip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--br2); background: var(--bg); color: var(--t2); border-radius: 20px; padding: 4px 9px; font-size: 11px; cursor: pointer; user-select: none }
+.checkchip input { width: 12px; height: 12px; accent-color: var(--tx) }
+.readonly-note { font-size: 11px; color: var(--t3); line-height: 1.6; margin-top: 5px }
+.save-msg { font-size: 12px; color: var(--t3); line-height: 1.5 }
+.subtle-link { color: var(--t2); text-decoration: underline; text-decoration-color: var(--br2); text-underline-offset: 3px; cursor: pointer }
+.subtle-link:hover { color: var(--tx); text-decoration-color: var(--tx) }
+
+/* ── ENHANCE REVIEW ── */
+.enhance-panel { background: #fbfaf7; border: 1px solid var(--br); border-left: 3px solid var(--tx); border-radius: var(--r); padding: 18px 20px; margin-bottom: 20px }
+.enhance-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px }
+.enhance-title { font-size: 11px; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; color: var(--tx) }
+.enhance-sub { font-size: 12px; color: var(--t3); line-height: 1.6; margin-top: 3px }
+.enhance-loading { color: var(--t3); font-size: 13px; line-height: 1.7; padding: 16px 0 }
+.review-grid { display: grid; gap: 8px }
+.review-row { background: var(--wh); border: 1px solid var(--br); border-radius: 6px; padding: 10px 12px; display: grid; grid-template-columns: 26px minmax(120px, 170px) 1fr; gap: 10px; align-items: start }
+.review-row input[type="checkbox"] { margin-top: 6px; width: 14px; height: 14px; accent-color: var(--tx) }
+.review-label { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--t3); font-weight: 700; padding-top: 5px }
+.review-current { font-size: 11px; color: var(--t3); line-height: 1.5; margin-bottom: 6px }
+.review-entry { background: var(--wh); border: 1px solid var(--br); border-radius: 6px; padding: 12px 14px; display: grid; gap: 10px }
+.review-entry-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start }
+.review-entry-title { font-size: 12px; font-weight: 700; color: var(--tx); line-height: 1.4 }
+.review-entry-prev { font-size: 12px; color: var(--t2); line-height: 1.55; font-style: italic; margin-top: 2px }
+.review-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+.review-field { border-top: 1px solid var(--br); padding-top: 8px }
+.review-field label { display: flex; align-items: center; gap: 6px; font-size: 9px; text-transform: uppercase; letter-spacing: .11em; color: var(--t3); font-weight: 700; margin-bottom: 5px }
+.review-field input[type="checkbox"] { width: 12px; height: 12px; accent-color: var(--tx) }
+.review-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--br); margin-top: 14px; padding-top: 14px }
+
+/* ── PROFILE VIEW ── */
+.profile-hd { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 28px 30px; margin-bottom: 20px }
+.profile-hd-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start }
+.profile-name { font-family: var(--serif); font-size: 34px; font-weight: 400; letter-spacing: -.02em; line-height: 1.1; margin-bottom: 5px }
+.profile-dates-line { font-family: var(--serif); font-size: 16px; color: var(--t3); font-style: italic; letter-spacing: .01em; margin-bottom: 12px }
+.profile-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 0 }
+.profile-role { font-size: 11px; color: var(--t3); font-style: italic }
+.profile-divider { border: none; border-top: 1px solid var(--br); margin: 16px 0 }
+.status-badge { font-size: 10px; padding: 3px 10px; border-radius: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase }
+.sb-bereit    { background: var(--gn); color: #fff }
+.sb-aktiv     { background: var(--am); color: #fff }
+.sb-kandidat  { background: #aaa; color: #fff }
+.profile-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px }
+.profile-tag { font-size: 11px; color: var(--t2); background: var(--bg2); border: 1px solid var(--br); border-radius: 20px; padding: 3px 11px; white-space: nowrap }
+.profile-curation { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 22px 24px; margin-bottom: 20px }
+.curation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 22px }
+.curation-item.full { grid-column: 1 / -1 }
+.curation-val { font-size: 13px; color: var(--t2); line-height: 1.75 }
+.curation-val.em { font-family: var(--serif); font-size: 17px; color: var(--tx); line-height: 1.65; font-style: italic }
+.curation-empty { font-size: 12px; color: var(--t3); font-style: italic }
+.profile-edit { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 22px 24px; margin-bottom: 20px }
+
+.profile-bio { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 28px 30px; margin-bottom: 24px }
+.profile-bio-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .15em; color: var(--t3); font-weight: 600; margin-bottom: 18px }
+.profile-bio-text { max-width: 680px }
+.bio-kicker { font-family: var(--serif); font-size: 18px; font-style: italic; color: var(--tx); line-height: 1.65; letter-spacing: -.01em; margin-bottom: 1.4em; font-weight: 400 }
+.bio-body { font-family: var(--serif); font-size: 14.5px; color: var(--t2); line-height: 1.95 }
+.bio-body p { margin-bottom: 1.15em }
+.bio-body p:last-child { margin-bottom: 0 }
+
+.prof-section { margin-bottom: 28px }
+.prof-sec-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 9px; border-bottom: 2px solid var(--tx) }
+.prof-sec-ic { font-size: 14px; color: var(--t2) }
+.prof-sec-name { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--tx) }
+.prof-sec-cnt { font-size: 11px; color: var(--t3) }
+
+.no-entries { font-size: 12px; color: var(--t3); font-style: italic; padding: 10px 0 32px; text-align: center }
+
+/* ── ENTRY CARDS ── */
+.card { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); margin-bottom: 6px; transition: border-color .12s, box-shadow .12s }
+.card:hover { border-color: #bbb; box-shadow: var(--sh) }
+.card.open { border-color: #999 }
+.ch { padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer }
+.ci { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 1px }
+.ci-A { background: #e6f0ec; color: var(--gn) }
+.ci-Z { background: #f5f0e5; color: #7a5800 }
+.ci-F { background: #e7ecf2; color: #2a4a72 }
+.ci-S { background: #ece7f2; color: #5a3a7a }
+.ci-x { background: var(--bg2); color: var(--t3) }
+.cl { flex: 1; min-width: 0 }
+.ce-person { font-size: 12px; font-weight: 600; color: var(--t3); margin-bottom: 1px; cursor: pointer }
+.ce-person:hover { color: var(--tx); text-decoration: underline }
+.ce-prev { font-size: 12px; color: var(--t2); line-height: 1.5; font-style: italic; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }
+.ce-meta { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; align-items: center }
+.buch-badge { font-size: 9px; padding: 2px 8px; border-radius: 8px; border: 1px solid; white-space: nowrap }
+.bb-d { color: var(--gn); border-color: #b8d8c8; background: #eef6f1 }
+.bb-h { color: var(--t3); border-color: var(--br2); background: var(--bg2) }
+.carr { color: #bbb; font-size: 10px; flex-shrink: 0; padding-top: 4px; transition: transform .2s }
+.card.open .carr { transform: rotate(180deg) }
+
+.cd { display: none; border-top: 1px solid var(--br); background: var(--bg) }
+.card.open .cd { display: block }
+.cd-in { padding: 16px 18px 18px; display: grid; gap: 18px }
+.lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .13em; color: var(--t3); margin-bottom: 5px; font-weight: 600 }
+.val { font-size: 13px; color: var(--t2); line-height: 1.9 }
+.val-fakt { font-size: 12px; color: var(--t3); line-height: 1.7; font-style: italic }
+.qt { font-family: var(--serif); font-size: 15px; font-style: italic; border-left: 3px solid var(--tx); padding-left: 16px; color: var(--tx); line-height: 2 }
+.src { font-size: 11px; color: var(--t3) }
+/* Buchnotiz — editorial callout */
+.buchnotiz-block { background: #fdf8ee; border: 1px solid #e8d9a0; border-left: 3px solid var(--am); border-radius: 6px; padding: 12px 14px }
+.buchnotiz-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .13em; color: var(--am); font-weight: 700; margin-bottom: 5px }
+.buchnotiz-text { font-size: 12.5px; color: #5a4400; line-height: 1.8; font-style: italic }
+.entry-curation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; background: var(--wh); border: 1px solid var(--br); border-radius: 6px; padding: 12px 14px }
+.entry-curation .full { grid-column: 1 / -1 }
+.entry-edit { display: grid; gap: 12px }
+.entry-edit-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--br); padding-top: 12px }
+
+/* ── PLACES TABLE ── */
+.places-wrap { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); overflow: hidden }
+.ptbl { width: 100%; border-collapse: collapse }
+.ptbl th { font-size: 9px; text-transform: uppercase; letter-spacing: .13em; color: var(--t3); padding: 10px 18px; text-align: left; background: var(--bg2); border-bottom: 1px solid var(--br); font-weight: 600 }
+.ptbl td { padding: 12px 18px; font-size: 13px; vertical-align: top; border-bottom: 1px solid var(--br) }
+.ptbl tr:last-child td { border-bottom: none }
+.ptbl td:first-child { font-weight: 600; min-width: 170px }
+.ptbl td:nth-child(2) { color: var(--t3); width: 200px; font-size: 12px }
+.ptbl td:last-child { color: var(--t2); line-height: 1.7 }
+.ptbl tr:hover td { background: var(--bg) }
+
+/* ── EMPTY / LOADING ── */
+.empty { text-align: center; padding: 5rem 2rem; color: var(--t3); font-size: 13px }
+.empty-ico { font-size: 28px; margin-bottom: 12px; opacity: .3 }
+
+/* ── ADD TAB ── */
+.add-wrap { max-width: 720px; margin: 0 auto }
+.add-card { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 22px 24px; margin-bottom: 8px }
+.add-intro { font-size: 13px; color: var(--t2); line-height: 1.7; margin-bottom: 18px }
+.add-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .13em; color: var(--t3); margin-bottom: 5px; font-weight: 600; display: block }
+.add-fld { margin-bottom: 12px }
+.add-fld:last-child { margin-bottom: 0 }
+.add-row { display: flex; gap: 10px }
+.add-row > .add-fld { flex: 1; min-width: 0 }
+.ai { width: 100%; padding: 8px 12px; border: 1px solid var(--br2); border-radius: 6px; font-size: 13px; font-family: var(--sans); background: var(--bg); color: var(--tx); outline: none; transition: border .15s }
+.ai:focus { border-color: var(--tx); background: var(--wh) }
+.capture-input { font-family: var(--serif); font-size: 22px; padding: 13px 14px }
+.ai-ta { resize: vertical; line-height: 1.6 }
+.ai-sel { cursor: pointer }
+.add-btn { background: var(--tx); color: var(--bg); border: none; padding: 9px 22px; border-radius: 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: opacity .15s; font-weight: 600 }
+.add-btn:hover { opacity: .82 }
+.add-btn:disabled { opacity: .35; cursor: default }
+.add-btn-sec { background: transparent; color: var(--t2); border: 1px solid var(--br2); padding: 9px 22px; border-radius: 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: all .15s }
+.add-btn-sec:hover { border-color: #999; color: var(--tx) }
+.add-btn-rm { background: transparent; color: #c0392b; border: 1px solid #e0b0aa; padding: 4px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all .15s; margin-left: auto }
+.add-btn-rm:hover { background: #fdf0ee; border-color: #c0392b }
+.add-sec-hd { font-size: 9px; text-transform: uppercase; letter-spacing: .15em; color: var(--t3); font-weight: 600; margin: 20px 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--br) }
+.add-entry-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap }
+.add-notice { background: #eef6f1; border: 1px solid #b8d8c8; border-left: 3px solid var(--gn); border-radius: var(--r); padding: 11px 15px; font-size: 12px; color: #1e5c3a; margin-bottom: 14px; line-height: 1.5 }
+.add-footer { display: flex; gap: 8px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--br) }
+.add-loading { text-align: center; padding: 4rem 2rem; color: var(--t3) }
+.add-loading-ico { font-size: 22px; margin-bottom: 14px; animation: spin 1.2s linear infinite; display: inline-block }
+.add-loading-txt { font-size: 13px }
+@keyframes spin { to { transform: rotate(360deg) } }
+
+/* ── STATUS TAB ── */
+.dash-hero { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 22px 24px; margin-bottom: 14px }
+.dash-title { font-family: var(--serif); font-size: 28px; font-weight: 400; letter-spacing: -.02em; line-height: 1.15 }
+.dash-copy { max-width: 760px; color: var(--t2); font-size: 13px; line-height: 1.75; margin-top: 8px }
+.dash-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 12px; margin-bottom: 12px }
+.dash-card { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 16px 18px }
+.dash-card-hd { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px }
+.dash-card-title { font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--t3); font-weight: 700 }
+.dash-card-note { font-size: 11px; color: var(--t3); line-height: 1.5 }
+.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px }
+.metric { background: var(--bg); border: 1px solid var(--br); border-radius: 6px; padding: 12px 14px }
+.metric-n { font-size: 26px; line-height: 1; font-weight: 200; letter-spacing: -.03em }
+.metric-l { margin-top: 5px; font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--t3); font-weight: 700 }
+.pipe-row { display: grid; grid-template-columns: minmax(140px, 190px) 1fr 48px; gap: 10px; align-items: center; margin: 9px 0 }
+.pipe-label { font-size: 12px; color: var(--t2) }
+.pipe-bar { height: 8px; background: var(--bg2); border-radius: 20px; overflow: hidden; border: 1px solid var(--br) }
+.pipe-fill { height: 100%; background: var(--tx); border-radius: 20px }
+.pipe-n { font-size: 11px; color: var(--t3); text-align: right }
+.queue-list { display: grid; gap: 6px }
+.queue-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; border-top: 1px solid var(--br); padding-top: 10px }
+.queue-row:first-child { border-top: none; padding-top: 0 }
+.queue-name { font-size: 13px; font-weight: 700; color: var(--tx); cursor: pointer }
+.queue-name:hover { text-decoration: underline }
+.queue-meta { font-size: 11px; color: var(--t3); line-height: 1.55; margin-top: 2px }
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 6px }
+.tag-map { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--br); background: var(--bg); border-radius: 20px; padding: 4px 9px; font-size: 11px; color: var(--t2) }
+.tag-map strong { color: var(--tx); font-weight: 700 }
+.tag-map.unmapped { background: #fdf8ee; border-color: #e8d9a0; color: #7a5800 }
+.sv-grid { display: grid; gap: 8px; margin-bottom: 24px }
+.sv-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px }
+.sv-stat { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 14px 18px; flex: 1; min-width: 100px }
+.sv-stat-n { font-size: 26px; font-weight: 200; color: var(--tx); line-height: 1; letter-spacing: -.03em }
+.sv-stat-l { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--t3); margin-top: 4px }
+.sv-tbl { width: 100%; border-collapse: collapse; background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); overflow: hidden }
+.sv-tbl th { font-size: 9px; text-transform: uppercase; letter-spacing: .13em; color: var(--t3); padding: 9px 14px; text-align: left; background: var(--bg2); border-bottom: 1px solid var(--br); font-weight: 600; white-space: nowrap }
+.sv-tbl th.sv-center { text-align: center }
+.sv-tbl td { padding: 10px 14px; font-size: 12px; vertical-align: middle; border-bottom: 1px solid var(--br) }
+.sv-tbl tr:last-child td { border-bottom: none }
+.sv-tbl tr:hover td { background: var(--bg) }
+.sv-name { font-weight: 600; font-size: 13px; cursor: pointer; color: var(--tx) }
+.sv-name:hover { text-decoration: underline }
+.sv-role { font-size: 11px; color: var(--t3); font-style: italic }
+.sv-cell { text-align: center; min-width: 42px }
+.sv-n { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 11px; font-weight: 600 }
+.sv-has { background: #eef6f1; color: var(--gn) }
+.sv-miss { background: var(--bg2); color: #bbb }
+.sv-warn { background: #fdf0ee; color: #c0392b }
+.sv-sec-hd { font-size: 9px; text-transform: uppercase; letter-spacing: .15em; color: var(--t3); font-weight: 600; margin: 20px 0 8px; padding-bottom: 8px; border-bottom: 1px solid var(--br) }
+
+/* ── ENHANCE FILTER BAR ── */
+.enhance-filter-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--br) }
+.enhance-filter-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--t3); font-weight: 700; white-space: nowrap; margin-right: 2px }
+.enhance-filter-bar .mini-btn.active { background: var(--tx); color: var(--wh); border-color: var(--tx) }
+
+/* ── THEMEN HEATMAP + ZEITSTRAHL ── */
+.pipe-fill-strong { height: 100%; background: var(--gn); border-radius: 20px }
+.pipe-fill-ok     { height: 100%; background: var(--am); border-radius: 20px; opacity: .75 }
+.pipe-fill-zero   { height: 100%; background: var(--br2); border-radius: 20px; opacity: .4 }
+.heat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px }
+.heat-grid .pipe-label { font-size: 11px }
+.era-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--tx); margin-right: 6px; vertical-align: middle; opacity: .5 }
+
+@media (max-width: 640px) {
+  body { padding-bottom: 58px; overflow-x: hidden }
+  .hdr, .bar, .main { padding-left: 1rem; padding-right: 1rem }
+  .hdr { padding-top: 1rem; padding-bottom: 1rem }
+  .hstats { gap: 14px }
+  .hstat-n { font-size: 22px }
+  .tabs { padding: 0; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; box-shadow: 0 -3px 12px rgba(0,0,0,.16) }
+  .tabs-in { justify-content: space-around; overflow: visible }
+  .tab { min-width: 0; flex: 1; padding: 12px 4px 10px; font-size: 8px; min-height: 52px; letter-spacing: .04em }
+  .tab-more { display: none }
+  .tab-add { margin-left: 0; color: #fff }
+  .bar { top: 0; padding-top: 8px; padding-bottom: 8px }
+  .bar-in { flex-wrap: nowrap; overflow-x: auto }
+  .srch-wrap { min-width: 190px }
+  #chips { display: flex; gap: 5px; flex-wrap: nowrap }
+  .pgrid { grid-template-columns: 1fr }
+  .pc { padding: 14px }
+  .profile-name { font-size: 24px }
+  .profile-dates-line { font-size: 14px }
+  .profile-hd, .profile-bio { padding: 16px 18px }
+  .profile-hd-top, .add-row { flex-direction: column }
+  .curation-grid, .entry-curation, .form-grid, .form-grid.three, .dash-grid, .metric-grid, .review-fields, .fit-grid { grid-template-columns: 1fr }
+  .review-row { grid-template-columns: 24px 1fr }
+  .review-row .review-label { grid-column: 2 }
+  .pilot-hero { padding: 23px 20px }
+  .pilot-thesis { font-size: 15px }
+  .pilot-board { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px }
+  .pilot-col { min-width: 82vw; scroll-snap-align: start }
+  .fit-head { flex-direction: column }
+  .profile-hd-top { gap: 18px }
+  .ptbl { min-width: 650px }
+  .places-wrap { overflow-x: auto }
+}
+</style>
+</head>
+<body>
+
+<div class="hdr"><div class="hdr-in">
+  <div>
+    <div class="kicker">Buchprojekt · Redaktion</div>
+    <div class="logo">Living Well</div>
+    <div class="tagline">Personenpool · Pilotband · Recherche</div>
+  </div>
+  <div class="hstats" id="hstats" style="color:#555;font-size:12px">Lädt…</div>
+</div></div>
+
+<nav class="tabs" aria-label="Hauptnavigation"><div class="tabs-in">
+  <button class="tab on" data-tab="status" onclick="goTab('status')">Arbeitsplatz</button>
+  <button class="tab" data-tab="pilot" onclick="goTab('pilot')">Pilotband</button>
+  <button class="tab" data-tab="persons" onclick="goTab('persons')">Personenpool</button>
+  <button class="tab" data-tab="entries" onclick="goTab('entries')">Recherche</button>
+  <button class="tab tab-more" data-tab="places" onclick="goTab('places')">Orte</button>
+  <button class="tab tab-add" data-tab="add" onclick="openCapture()">+ Name</button>
+  <div class="tab-sep" id="tab-sep"></div>
+  <div class="back-btn" id="back-btn" onclick="goTab('persons')">
+    <span class="back-arrow">←</span> Zurück zur Übersicht
+  </div>
+</div></nav>
+
+<div class="bar" id="bar"><div class="bar-in">
+  <div class="srch-wrap">
+    <span class="srch-ico">⌕</span>
+    <input class="srch" id="srch" placeholder="Suchen — Name, Stichwort, Zitat…" oninput="render()">
+  </div>
+  <div id="chips"></div>
+  <div class="cnt" id="cnt"></div>
+</div></div>
+
+<div class="main" id="main">
+  <div class="empty"><div class="empty-ico">○</div>Wird geladen…</div>
+</div>
+
+<script>
+var SB = 'https://beglfjfqzczhjxzsgxgc.supabase.co';
+var SK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlZ2xmamZxemN6aGp4enNneGdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNzQzMTksImV4cCI6MjA5Mjk1MDMxOX0.63T9b1GvvwJ64vkA7r0rBmm7jYVxWjj_thLFW3iDG-Y';
+
+var persons = [], entries = [], places = [], books = [], bookCandidates = [], researchJobs = [], aiRuns = [];
+var tableAvailability = {};
+var view = 'status';
+var profilePerson = null;
+var fil = {};
+
+var KAT_ICON  = { Anekdote: '◈', Zitat: '"', Fakt: '·', Stil: '◉' };
+var KAT_CI    = { Anekdote: 'ci-A', Zitat: 'ci-Z', Fakt: 'ci-F', Stil: 'ci-S' };
+var KAT_ORDER = ['Anekdote', 'Zitat', 'Fakt', 'Stil'];
+var FORMAT_EIGNUNG = ['doppelseite', 'kurzprofil', 'kapitelauftakt', 'randnotiz', 'zitatseite'];
+var QUELLENQUALITAET = ['unbekannt', 'sekundaer', 'primaer', 'geprueft'];
+var BUCHREIFE = ['roh', 'brauchbar', 'stark', 'final'];
+var SEITENROLLE = ['haupttext', 'auftakt', 'marginalie', 'bildunterschrift', 'abschluss', 'unentschieden'];
+var THEMA_LIST = ['Arbeit', 'Disziplin', 'Freiheit', 'Stil', 'Koerper', 'Tod', 'Scheitern', 'Ruhm', 'Freundschaft', 'Liebe', 'Natur', 'Genuss', 'Risiko', 'Alter', 'Einsamkeit'];
+var PILOT_THESIS = 'Living Well porträtiert Menschen, die ihr Leben radikal nach einer eigenen Idee formten – und zeigt an konkreten Szenen, was daran inspirierend, widersprüchlich und teuer war.';
+var CANDIDATE_STAGES = ['pruefen', 'shortlist', 'selected', 'parked'];
+var CANDIDATE_EDIT_STAGES = ['pool'].concat(CANDIDATE_STAGES);
+var STAGE_LABELS = { pool:'Pool', pruefen:'Prüfen', shortlist:'Shortlist', selected:'Im Pilot', parked:'Parken' };
+var FIT_FIELDS = [
+  ['thesis_fit', 'Eigene, radikale Lebensidee'],
+  ['scene_potential', 'Szenische Ergiebigkeit'],
+  ['tension_depth', 'Widerspruch und Preis'],
+  ['resonance_value', 'Heutige Resonanz und Inspiration'],
+  ['visual_potential', 'Visuelles Potenzial'],
+  ['ensemble_value', 'Eigenständiger Ensemblebeitrag']
+];
+var LABEL = {
+  doppelseite: 'Doppelseite',
+  kurzprofil: 'Kurzprofil',
+  kapitelauftakt: 'Kapitelauftakt',
+  randnotiz: 'Randnotiz',
+  zitatseite: 'Zitatseite',
+  unbekannt: 'Unbekannt',
+  sekundaer: 'Sekundär',
+  primaer: 'Primär',
+  geprueft: 'Geprüft',
+  roh: 'Roh',
+  brauchbar: 'Brauchbar',
+  stark: 'Stark',
+  final: 'Final',
+  haupttext: 'Haupttext',
+  auftakt: 'Auftakt',
+  marginalie: 'Marginalie',
+  bildunterschrift: 'Bildunterschrift',
+  abschluss: 'Abschluss',
+  unentschieden: 'Unentschieden',
+  Koerper: 'Körper',
+  fehlende_these: 'Fehlende These',
+  starke_personen: 'Starke Personen',
+  ungepruefte_quellen: 'Ungeprüfte Quellen',
+  formatbereit: 'Format',
+  buchreif: 'Buchreif',
+  strong_entries: 'Stark',
+  unchecked_entries: 'Ungeprüft',
+  unlinked_entries: 'Zuordnung offen',
+  manual: 'Menschlich bestätigt',
+  ai: 'KI-Vorschlag',
+  hybrid: 'KI + menschlich geprüft',
+  import: 'Importiert',
+  pool: 'Pool',
+  pruefen: 'Prüfen',
+  shortlist: 'Shortlist',
+  selected: 'Im Pilot',
+  parked: 'Parken'
+};
+var profileEdit = false;
+var enhanceState = { phase: 'idle', personName: '', data: null, error: '' };
+var TAG_THEME_RULES = {
+  Arbeit: ['arbeit','werk','beruf','job','routine','schreibtisch','karriere','bankbeamter','atelier'],
+  Disziplin: ['disziplin','training','routine','boxring','polo','fitness','morgens','ausdauer','kontrolle'],
+  Freiheit: ['freiheit','unabhaengig','unabhängig','rebell','playboy','reisen','abenteuer','gegen konventionen'],
+  Stil: ['stil','mode','eleganz','cool','kleidung','film','italien','paris','cinema','cavett','sophia','dolce vita','jermyn'],
+  Koerper: ['körper','koerper','sport','boxen','tennis','polo','rennen','racing','physisch','wetsuit'],
+  Tod: ['tod','sterben','bois','grab','letzte','vergaenglichkeit','vergänglichkeit'],
+  Scheitern: ['scheitern','reue','fall','verfall','wunde','fehler','dunkle seite','tragik'],
+  Ruhm: ['ruhm','star','weltstar','hollywood','fame','berühmt','beruehmt','film','publicity'],
+  Freundschaft: ['freund','freundschaft','netzwerk','cassini','taki','mentor','tueroeffner','türöffner'],
+  Liebe: ['liebe','frauen','ehe','lover','latin lover','doris','faye','hutton','romanze','verfuehrung','verführung'],
+  Natur: ['natur','garten','meer','berg','wüste','wueste','wald'],
+  Genuss: ['genuss','wein','essen','restaurant','calvados','nacht','tour d','dolce vita','cafe','café'],
+  Risiko: ['risiko','ferrari','krieg','trujillo','rennsport','unfall','jagd','wette','gefährlich','gefaehrlich'],
+  Alter: ['alter','spät','spaet','letzte jahre','altwerden'],
+  Einsamkeit: ['einsamkeit','allein','isolation','exil','verloren']
+};
+
+// ── DATA ─────────────────────────────────────────
+function supa(t) {
+  return fetch(SB + '/rest/v1/' + t + '?select=*&order=created_at.asc', {
+    headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK }
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error(parseSupaErr(t) || 'Fehler beim Laden von ' + t); });
+    return r.json();
+  });
+}
+
+function supaOptional(t) {
+  return supa(t).then(function(data) {
+    tableAvailability[t] = true;
+    return data;
+  }).catch(function(err) {
+    tableAvailability[t] = false;
+    console.warn('Optionale Tabelle nicht verfügbar:', t, err.message);
+    return [];
+  });
+}
+
+function init() {
+  var requestedView = new URLSearchParams(window.location.search).get('capture') === '1' ? 'add' : view;
+  Promise.all([
+    supa('persons'), supa('entries'), supa('places'),
+    supaOptional('books'), supaOptional('book_candidates'),
+    supaOptional('research_jobs'), supaOptional('ai_runs')
+  ]).then(function(r) {
+    persons = r[0]; entries = r[1]; places = r[2]; books = r[3];
+    bookCandidates = r[4]; researchJobs = r[5]; aiRuns = r[6];
+    normalizeData();
+    updateStats();
+    goTab(requestedView || 'status');
+    setTimeout(resumeQueuedResearch, 100);
+  }).catch(function() {
+    document.getElementById('main').innerHTML =
+      '<div class="empty"><div class="empty-ico">⚠</div>Fehler beim Laden der Daten.</div>';
+  });
+}
+
+function normalizeData() {
+  persons = (persons || []).map(function(p) {
+    p.tags = arr(p.tags);
+    p.format_eignung = arr(p.format_eignung);
+    return p;
+  });
+  entries = (entries || []).map(function(x) {
+    x.tags = arr(x.tags);
+    x.themen = arr(x.themen);
+    if (x.staerke !== undefined && x.staerke !== null && x.staerke !== '') x.staerke = Number(x.staerke);
+    return x;
+  });
+  places = places || [];
+  books = books || [];
+  bookCandidates = bookCandidates || [];
+  researchJobs = researchJobs || [];
+  aiRuns = aiRuns || [];
+}
+
+function updateStats() {
+  var pilot = activeBook();
+  var selected = pilot ? bookCandidates.filter(function(x) { return x.book_id === pilot.id && x.stage === 'selected'; }).length : 0;
+  document.getElementById('hstats').innerHTML =
+    stat(persons.length, 'Im Pool') +
+    stat(selected, 'Im Pilot') +
+    stat(entries.length, 'Material') +
+    stat(openSourceCount(), 'Quellen offen');
+}
+function stat(n, l) {
+  return '<div class="hstat"><div class="hstat-n">' + n + '</div><div class="hstat-l">' + l + '</div></div>';
+}
+
+// ── NAVIGATION ───────────────────────────────────
+function goTab(t) {
+  view = t; profilePerson = null; profileEdit = false; fil = {};
+  document.querySelectorAll('.tab').forEach(function(x) {
+    x.classList.toggle('on', x.dataset.tab === t);
+  });
+  document.getElementById('back-btn').classList.remove('vis');
+  document.getElementById('tab-sep').style.display = 'none';
+  document.getElementById('bar').style.display = (t === 'add' || t === 'status' || t === 'pilot') ? 'none' : '';
+  document.getElementById('srch').value = '';
+  window.scrollTo(0, 0);
+  chips(); render();
+}
+
+function openCapture() {
+  addState = { phase: 'input', person: null, entries: [], prefill: '', job: null, usage: null, mode: 'capture' };
+  goTab('add');
+}
+
+function showProfile(p) {
+  view = 'profile'; profilePerson = p; profileEdit = false;
+  document.querySelectorAll('.tab').forEach(function(x) {
+    x.classList.toggle('on', x.dataset.tab === 'persons');
+  });
+  document.getElementById('back-btn').classList.add('vis');
+  document.getElementById('tab-sep').style.display = 'block';
+  document.getElementById('bar').style.display = 'none';
+  render();
+}
+
+// ── FILTER CHIPS ─────────────────────────────────
+function chips() {
+  var el = document.getElementById('chips'); el.innerHTML = '';
+  if (view === 'persons') {
+    mkGroup(el, 'status', ['Alle', 'aktiv', 'kandidat', 'bereit']);
+    cSep(el);
+    mkGroup(el, 'cur', ['Alle', 'fehlende_these', 'starke_personen', 'ungepruefte_quellen', 'formatbereit', 'buchreif']);
+    cSep(el);
+    mkGroup(el, 'format', ['Alle'].concat(FORMAT_EIGNUNG));
+  }
+  if (view === 'entries') {
+    mkGroup(el, 'kat', ['Alle', 'Anekdote', 'Zitat', 'Fakt', 'Stil']);
+    cSep(el);
+    mkGroup(el, 'buch', ['Alle', 'direkt', 'hintergrund']);
+    cSep(el);
+    mkGroup(el, 'curEntry', ['Alle', 'strong_entries', 'unchecked_entries', 'unlinked_entries']);
+    cSep(el);
+    mkGroup(el, 'reife', ['Alle'].concat(BUCHREIFE));
+  }
+}
+function cSep(el) { var d = document.createElement('div'); d.className = 'csep'; el.appendChild(d); }
+function mkGroup(el, grp, vals) {
+  var labels = { direkt: 'Direkt', hintergrund: 'Hintergrund', aktiv: 'Aktiv', kandidat: 'Kandidat', bereit: 'Bereit' };
+  vals.forEach(function(v) {
+    var b = document.createElement('button'); b.className = 'chip';
+    if ((!fil[grp] && v === 'Alle') || fil[grp] === v) b.className += ' on';
+    b.textContent = labels[v] || LABEL[v] || v;
+    b.onclick = function() { fil[grp] = v === 'Alle' ? null : v; chips(); render(); };
+    el.appendChild(b);
+  });
+}
+
+// ── SEARCH ───────────────────────────────────────
+function q() { return (document.getElementById('srch').value || '').toLowerCase(); }
+function hit(obj, s) {
+  if (!s) return true;
+  return Object.values(obj).some(function(v) {
+    return v && (Array.isArray(v) ? v.join(' ') : String(v)).toLowerCase().indexOf(s) > -1;
+  });
+}
+
+// ── RENDER ───────────────────────────────────────
+function render() {
+  var main = document.getElementById('main'), s = q();
+  if (view === 'profile')       rProfile(main);
+  else if (view === 'persons')  rPersons(main, s);
+  else if (view === 'entries')  rEntries(main, s);
+  else if (view === 'add')      rAdd(main);
+  else if (view === 'status')   rStatus(main);
+  else if (view === 'pilot')    rPilot(main);
+  else                          rPlaces(main, s);
+}
+
+// ── PERSONS ──────────────────────────────────────
+function rPersons(main, s) {
+  var data = persons.filter(function(p) {
+    if (fil.status && p.status !== fil.status) return false;
+    if (fil.format && arr(p.format_eignung).indexOf(fil.format) < 0) return false;
+    if (fil.cur && !personMatchesCuration(p, fil.cur)) return false;
+    return hit(p, s);
+  });
+  document.getElementById('cnt').textContent = data.length + ' Personen';
+  main.innerHTML = '';
+  if (!data.length) {
+    main.innerHTML = '<div class="empty"><div class="empty-ico">○</div>Keine Personen gefunden.</div>';
+    return;
+  }
+  var grid = document.createElement('div'); grid.className = 'pgrid';
+  data.forEach(function(p) { grid.appendChild(mkPCard(p)); });
+  main.appendChild(grid);
+}
+
+function mkPCard(p) {
+  var dc  = p.status === 'bereit' ? 'dc' : p.status === 'aktiv' ? 'dr' : 'dm';
+  var ec  = personEntries(p).length;
+  var dm  = personDashboardModel(p);
+  var dossier = dossierModel(p), candidate = candidateFor(p), fit = fitScore(candidate);
+  var gaps = dm.gaps.slice(0, 2).map(function(g) { return '<span class="pill pill-w">' + esc(g) + '</span>'; }).join('');
+  var tags = (p.tags || []).map(function(t) { return '<span class="pill">' + esc(t) + '</span>'; }).join('');
+  var formats = arr(p.format_eignung).slice(0, 2).map(function(t) { return '<span class="pill pill-q">' + esc(label(t)) + '</span>'; }).join('');
+  var c = document.createElement('div'); c.className = 'pc';
+  c.innerHTML =
+    '<div class="pc-top">' +
+      '<div class="pc-name">' + esc(p.name) + '</div>' +
+      '<div class="sdot ' + dc + '" title="' + esc(p.status || '') + '"></div>' +
+    '</div>' +
+    (p.kategorie ? '<div class="pc-role">'  + esc(p.kategorie) + '</div>' : '') +
+    (p.dates     ? '<div class="pc-dates">' + esc(p.dates)     + '</div>' : '') +
+    '<div class="pc-ec' + (ec > 0 ? ' has' : '') + '">' +
+      (ec > 0 ? ec + ' Eintr' + (ec === 1 ? 'ag' : 'äge') : 'Noch kein Material') +
+    '</div>' +
+    '<div class="dossier-row"><span class="pill ' + (dossier.count >= 6 ? 'pill-s' : 'pill-q') + '">Dossier ' + dossier.count + '/8</span>' + (fit !== null ? '<span class="pill pill-s">Pilot ' + fit + '/12</span>' : '') + '</div>' +
+    ((formats || gaps || tags) ? '<div class="pc-tags">' + formats + gaps + tags + '</div>' : '');
+  c.onclick = function() { showProfile(p); };
+  return c;
+}
+
+// ── PROFILE ──────────────────────────────────────
+function rProfile(main) {
+  var p = profilePerson;
+  if (!p) { main.innerHTML = ''; return; }
+  if (profileEdit) { rProfileEdit(main, p); return; }
+
+  var pEntries = personEntries(p);
+  var byKat = {};
+  pEntries.forEach(function(x) {
+    var k = x.kategorie || 'Sonstige';
+    if (!byKat[k]) byKat[k] = [];
+    byKat[k].push(x);
+  });
+
+  var sbClass = p.status === 'bereit' ? 'sb-bereit' : p.status === 'aktiv' ? 'sb-aktiv' : 'sb-kandidat';
+  var sbLabel = p.status === 'bereit' ? 'Bereit' : p.status === 'aktiv' ? 'Aktiv' : 'Kandidat';
+  var tags = (p.tags || []).map(function(t) { return '<span class="profile-tag">' + esc(t) + '</span>'; }).join('');
+
+  main.innerHTML = '';
+
+  // Header
+  var hd = document.createElement('div'); hd.className = 'profile-hd';
+  hd.innerHTML =
+    '<div class="profile-hd-top">' +
+      '<div>' +
+        '<div class="profile-name">' + esc(p.name) + '</div>' +
+        (p.dates ? '<div class="profile-dates-line">' + esc(p.dates) + '</div>' : '') +
+        '<div class="profile-meta">' +
+          (p.kategorie ? '<span class="profile-role">' + esc(p.kategorie) + '</span>' : '') +
+          (p.kategorie ? '<span style="color:var(--br2)">·</span>' : '') +
+          '<span class="status-badge ' + sbClass + '">' + sbLabel + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="actions">' +
+          '<button class="mini-btn" onclick="moreResearch()">Mehr recherchieren</button>' +
+          '<button class="mini-btn" onclick="editProfile()">Bearbeiten</button>' +
+        '</div>' +
+        enhanceFilterBar(p, pEntries) +
+      '</div>' +
+    '</div>' +
+    (tags ? '<hr class="profile-divider"><div class="profile-tags">' + tags + '</div>' : '');
+  main.appendChild(hd);
+
+  if (enhanceState.personName === p.name && enhanceState.phase !== 'idle') {
+    main.appendChild(renderEnhancePanel(p));
+  }
+
+  main.appendChild(renderFitPanel(p));
+
+  var cur = document.createElement('div'); cur.className = 'profile-curation';
+  cur.innerHTML =
+    '<div class="profile-bio-lbl">Kuration</div>' +
+    '<div class="curation-grid">' +
+      curationItem('Lebensprinzip', p.lebensprinzip, true, true) +
+      curationItem('Buchthese', p.buchthese, true) +
+      curationItem('Archetyp', p.archetyp, false) +
+      curationItem('Spannung', p.spannung, false) +
+      curationItem('Visuelles Motiv', p.visuelles_motiv, false) +
+      curationItem('Format-Eignung', arr(p.format_eignung).map(label).join(', '), false) +
+      curationItem('Motive aus Tags', profileTagThemes(p).map(label).join(', '), false) +
+      curationItem('Notiz', p.kurationsnotiz, false, false, true) +
+    '</div>';
+  main.appendChild(cur);
+
+  // Bio
+  if (p.note) {
+    var bio = document.createElement('div'); bio.className = 'profile-bio';
+    bio.innerHTML =
+      '<div class="profile-bio-lbl">Biographie</div>' +
+      '<div class="profile-bio-text">' + formatBio(p.note) + '</div>';
+    main.appendChild(bio);
+  }
+
+  // Entry sections
+  if (pEntries.length === 0) {
+    var none = document.createElement('div'); none.className = 'no-entries';
+    none.textContent = '— Einträge werden hier erscheinen sobald sie hinzugefügt werden —';
+    main.appendChild(none);
+    return;
+  }
+
+  var orderedKats = KAT_ORDER.filter(function(k) { return byKat[k]; })
+    .concat(Object.keys(byKat).filter(function(k) { return KAT_ORDER.indexOf(k) < 0; }));
+
+  orderedKats.forEach(function(kat) {
+    var list = byKat[kat];
+    var sec = document.createElement('div'); sec.className = 'prof-section';
+    sec.innerHTML =
+      '<div class="prof-sec-hd">' +
+        '<span class="prof-sec-ic">' + (KAT_ICON[kat] || '·') + '</span>' +
+        '<span class="prof-sec-name">' + esc(kat) + '</span>' +
+        '<span class="prof-sec-cnt">' + list.length + ' Eintr' + (list.length === 1 ? 'ag' : 'äge') + '</span>' +
+      '</div>';
+    list.forEach(function(x) { sec.appendChild(mkEntryCard(x, false)); });
+    main.appendChild(sec);
+  });
+}
+
+function rProfileEdit(main, p) {
+  main.innerHTML = '';
+  var box = document.createElement('div'); box.className = 'profile-edit';
+  box.innerHTML =
+    '<div class="profile-bio-lbl">Profil bearbeiten</div>' +
+    '<div class="form-grid">' +
+      '<div class="add-fld"><label class="add-lbl">Name</label><input id="edit-p-name" class="ai" value="' + esc(p.name || '') + '" readonly><div class="readonly-note">Namen werden in V1 nicht umbenannt.</div></div>' +
+      '<div class="add-fld"><label class="add-lbl">Status</label><select id="edit-p-status" class="ai ai-sel">' + opts(['kandidat','aktiv','bereit'], p.status || 'kandidat') + '</select></div>' +
+      '<div class="add-fld"><label class="add-lbl">Kategorie</label><input id="edit-p-kat" class="ai" value="' + esc(p.kategorie || '') + '"></div>' +
+      '<div class="add-fld"><label class="add-lbl">Daten</label><input id="edit-p-dates" class="ai" value="' + esc(p.dates || '') + '"></div>' +
+    '</div>' +
+    '<div class="add-fld"><label class="add-lbl">Tags</label><input id="edit-p-tags" class="ai" value="' + esc(arr(p.tags).join(', ')) + '"></div>' +
+    '<div class="add-fld"><label class="add-lbl">Biografie</label><textarea id="edit-p-note" class="ai ai-ta" rows="5">' + esc(p.note || '') + '</textarea></div>' +
+    '<div class="form-grid">' +
+      '<div class="add-fld"><label class="add-lbl">Lebensprinzip</label><textarea id="edit-p-principle" class="ai ai-ta" rows="3">' + esc(p.lebensprinzip || '') + '</textarea></div>' +
+      '<div class="add-fld"><label class="add-lbl">Buchthese</label><textarea id="edit-p-thesis" class="ai ai-ta" rows="3">' + esc(p.buchthese || '') + '</textarea></div>' +
+      '<div class="add-fld"><label class="add-lbl">Archetyp</label><input id="edit-p-arch" class="ai" value="' + esc(p.archetyp || '') + '"></div>' +
+      '<div class="add-fld"><label class="add-lbl">Visuelles Motiv</label><input id="edit-p-visual" class="ai" value="' + esc(p.visuelles_motiv || '') + '"></div>' +
+    '</div>' +
+    '<div class="add-fld"><label class="add-lbl">Spannung / Widerspruch</label><textarea id="edit-p-tension" class="ai ai-ta" rows="3">' + esc(p.spannung || '') + '</textarea></div>' +
+    '<div class="add-fld"><label class="add-lbl">Format-Eignung</label>' + checkGroup('edit-p-format', FORMAT_EIGNUNG, arr(p.format_eignung)) + '</div>' +
+    '<div class="add-fld"><label class="add-lbl">Kurationsnotiz</label><textarea id="edit-p-cur-note" class="ai ai-ta" rows="3">' + esc(p.kurationsnotiz || '') + '</textarea></div>' +
+    '<div class="add-footer">' +
+      '<button id="edit-p-save" class="add-btn" onclick="saveProfileEdit()">Speichern</button>' +
+      '<button class="add-btn-sec" onclick="cancelProfileEdit()">Abbrechen</button>' +
+    '</div>';
+  main.appendChild(box);
+}
+
+function editProfile() { profileEdit = true; render(); }
+function cancelProfileEdit() { profileEdit = false; render(); }
+function moreResearch() {
+  var p = profilePerson;
+  if (!p) return;
+  addState = { phase: 'input', person: null, entries: [], prefill: p.name, job: null, usage: null, mode: 'capture' };
+  goTab('add');
+}
+
+function saveProfileEdit() {
+  var p = profilePerson;
+  if (!p) return;
+  var btn = document.getElementById('edit-p-save');
+  btn.disabled = true; btn.textContent = 'Speichert…';
+  var data = {
+    name: p.name,
+    kategorie: val('edit-p-kat'),
+    dates: val('edit-p-dates'),
+    status: val('edit-p-status') || 'kandidat',
+    tags: splitList(val('edit-p-tags')),
+    note: val('edit-p-note'),
+    lebensprinzip: val('edit-p-principle'),
+    buchthese: val('edit-p-thesis'),
+    archetyp: val('edit-p-arch'),
+    spannung: val('edit-p-tension'),
+    visuelles_motiv: val('edit-p-visual'),
+    format_eignung: getChecked('edit-p-format'),
+    kurationsnotiz: val('edit-p-cur-note')
+  };
+  patchSupa('persons', p, personPayload(data, false)).then(function(saved) {
+    Object.assign(p, saved || data);
+    profilePerson = p;
+    profileEdit = false;
+    updateStats();
+    render();
+  }).catch(function(err) {
+    btn.disabled = false; btn.textContent = 'Speichern';
+    alert('Fehler beim Speichern: ' + err.message);
+  });
+}
+
+// ── GEMINI ENHANCE / REVIEW ─────────────────────
+var ENHANCE_FILTERS = {
+  null: {
+    label: 'Alle Einträge',
+    filter: null,
+    context: 'Bitte vorhandene Einträge kuratorisch bewerten. Keine bestehenden Texte umschreiben; nur Vorschläge für Kuration, Themen, Quellenqualität, Buchreife und Seitenrolle.'
+  },
+  Anekdote: {
+    label: 'Anekdoten',
+    filter: function(x) { return x.kategorie === 'Anekdote'; },
+    context: 'Fokus auf Anekdoten: Stärke und Erzählbarkeit bewerten. Sind die Szenen konkret, überraschend, mit Ort und Zeit? Buchreife, Ton und Seitenrolle (haupttext/auftakt) vorschlagen. Starke Anekdoten bekommen staerke 4–5.'
+  },
+  Zitat: {
+    label: 'Zitate',
+    filter: function(x) { return x.kategorie === 'Zitat'; },
+    context: 'Fokus auf Zitate: Quellenqualität kritisch prüfen — sind diese Zitate wirklich belegt und authentisch? Buchreife und Seitenrolle (auftakt/marginalie/zitatseite) vorschlagen. Bei zweifelhafter Zuschreibung buchreife auf "brauchbar" oder "roh" setzen, quellenqualitaet nicht überschätzen.'
+  },
+  Fakt: {
+    label: 'Fakten',
+    filter: function(x) { return x.kategorie === 'Fakt'; },
+    context: 'Fokus auf Fakten: Welche sind buchrelevant als Randnotiz oder Hintergrundinfo, welche nur Recherchematerial? Stärke, Buchreife und Seitenrolle (marginalie/bildunterschrift) vorschlagen.'
+  },
+  Stil: {
+    label: 'Stil-Einträge',
+    filter: function(x) { return x.kategorie === 'Stil'; },
+    context: 'Fokus auf Stil-Einträge: Gewohnheiten und Rituale — wie buchfähig sind sie als konkrete, sinnliche Szene? Ton und Seitenrolle bewerten. Starke Stil-Einträge machen abstrakte Charaktereigenschaften greifbar sichtbar.'
+  },
+  quellen: {
+    label: 'Quellen prüfen',
+    filter: entryUnchecked,
+    context: 'Fokus auf Quellenqualität: Alle Einträge mit unbekannter oder ungeprüfter Quelle kritisch bewerten. Quellenqualität auf "sekundaer", "primaer" oder "geprueft" setzen wenn möglich — "geprueft" nur bei eindeutiger Primärquelle. Nicht verifizierbare Einträge bei "unbekannt" belassen und buchreife entsprechend anpassen.'
+  }
+};
+
+function startEnhance(filterKey) {
+  filterKey = filterKey || null;
+  var p = profilePerson;
+  if (!p) return;
+
+  var cfg = ENHANCE_FILTERS[filterKey] || ENHANCE_FILTERS[null];
+  var allEntries = personEntries(p);
+  var filteredEntries = cfg.filter ? allEntries.filter(cfg.filter) : allEntries;
+  if (!filteredEntries.length) return;
+
+  enhanceState = { phase: 'loading', personName: p.name, data: null, error: '', filterKey: filterKey, filterLabel: cfg.label };
+  render();
+
+  fetch('/api/enhance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      person: p,
+      entries: filteredEntries.map(entryForEnhance),
+      context: cfg.context
+    })
+  })
+  .then(function(r) {
+    return r.json().then(function(data) {
+      if (data._meta && data._meta.usage && !r.ok) persistAiUsage(data._meta.usage, null, p, 'failed', data.error);
+      if (!r.ok || data.error) throw new Error(data.error || 'KI-Kuration fehlgeschlagen');
+      return data;
+    });
+  })
+  .then(function(data) {
+    if (data._meta && data._meta.usage) persistAiUsage(data._meta.usage, null, p);
+    enhanceState = { phase: 'review', personName: p.name, data: normalizeEnhanceData(data), error: '', filterKey: filterKey, filterLabel: cfg.label };
+    render();
+  })
+  .catch(function(err) {
+    enhanceState = { phase: 'error', personName: p.name, data: null, error: err.message, filterKey: filterKey, filterLabel: cfg.label };
+    render();
+  });
+}
+
+function cancelEnhance() {
+  enhanceState = { phase: 'idle', personName: '', data: null, error: '' };
+  render();
+}
+
+function entryForEnhance(x) {
+  return {
+    id: x.id,
+    person: x.person,
+    kategorie: x.kategorie || '',
+    buch: x.buch || '',
+    tags: arr(x.tags),
+    preview: x.preview || '',
+    quote: x.quote || '',
+    anekdote: x.anekdote || '',
+    fakt: x.fakt || '',
+    buchnotiz: x.buchnotiz || '',
+    quelle: x.quelle || '',
+    quelle_url: x.quelle_url || '',
+    staerke: x.staerke || null,
+    quellenqualitaet: x.quellenqualitaet || '',
+    buchreife: x.buchreife || '',
+    themen: arr(x.themen),
+    ton: x.ton || '',
+    seitenrolle: x.seitenrolle || ''
+  };
+}
+
+function normalizeEnhanceData(data) {
+  data = data || {};
+  var person = normalizePersonSuggestion(data.person || {});
+  person.tags = arr((data.person || {}).tags);
+  var byId = {};
+  personEntries(profilePerson || {}).forEach(function(x) { if (x.id) byId[x.id] = x; });
+  var eSugs = arr(data.entries).map(function(e) {
+    e = e || {};
+    return {
+      id: e.id || '',
+      staerke: normalizeStrength(e.staerke),
+      quellenqualitaet: cleanChoice(e.quellenqualitaet, QUELLENQUALITAET, ''),
+      buchreife: cleanChoice(e.buchreife, BUCHREIFE, ''),
+      themen: arr(e.themen).filter(function(t) { return THEMA_LIST.indexOf(t) >= 0; }),
+      ton: e.ton || '',
+      seitenrolle: cleanChoice(e.seitenrolle, SEITENROLLE, ''),
+      buchnotiz: e.buchnotiz || '',
+      quelle: e.quelle || '',
+      quelle_url: e.quelle_url || '',
+      tags: arr(e.tags),
+      _entry: byId[e.id] || null
+    };
+  }).filter(function(e) { return e.id && e._entry; });
+  return {
+    person: person,
+    entries: eSugs,
+    tag_mapping: arr(data.tag_mapping)
+  };
+}
+
+function renderEnhancePanel(p) {
+  var box = document.createElement('div');
+  box.className = 'enhance-panel';
+
+  var filterLbl = enhanceState.filterLabel ? ' · ' + enhanceState.filterLabel : '';
+
+  if (enhanceState.phase === 'loading') {
+    box.innerHTML =
+      '<div class="enhance-hd">' +
+        '<div><div class="enhance-title">Gemini-Kuration' + esc(filterLbl) + '</div><div class="enhance-sub">Analysiert Profil, Einträge und Tags. Es wird noch nichts gespeichert.</div></div>' +
+        '<button class="mini-btn" onclick="cancelEnhance()">Schließen</button>' +
+      '</div>' +
+      '<div class="enhance-loading">Vorschläge werden erzeugt…</div>';
+    return box;
+  }
+
+  if (enhanceState.phase === 'error') {
+    var retryKey = enhanceState.filterKey ? '\'' + enhanceState.filterKey + '\'' : '';
+    box.innerHTML =
+      '<div class="enhance-hd">' +
+        '<div><div class="enhance-title">Gemini-Kuration' + esc(filterLbl) + '</div><div class="enhance-sub">Fehler: ' + esc(enhanceState.error) + '</div></div>' +
+        '<div class="actions"><button class="mini-btn primary" onclick="startEnhance(' + retryKey + ')">Erneut versuchen</button><button class="mini-btn" onclick="cancelEnhance()">Schließen</button></div>' +
+      '</div>';
+    return box;
+  }
+
+  if (enhanceState.phase === 'saved') {
+    box.innerHTML =
+      '<div class="enhance-hd">' +
+        '<div><div class="enhance-title">Gemini-Kuration' + esc(filterLbl) + '</div><div class="enhance-sub">Ausgewählte Vorschläge wurden gespeichert.</div></div>' +
+        '<button class="mini-btn" onclick="cancelEnhance()">Schließen</button>' +
+      '</div>';
+    return box;
+  }
+
+  var data = enhanceState.data || {};
+  var personSug = data.person || {};
+  var html =
+    '<div class="enhance-hd">' +
+      '<div><div class="enhance-title">Vorschläge prüfen</div><div class="enhance-sub">Häkchen bedeutet: beim Speichern übernehmen. Leere Felder sind vorausgewählt, bestehende Inhalte bleiben erst einmal geschützt.</div></div>' +
+      '<button class="mini-btn" onclick="cancelEnhance()">Schließen</button>' +
+    '</div>';
+
+  html += '<div class="add-sec-hd">Profil</div><div class="review-grid">';
+  profileReviewFields().forEach(function(f) {
+    html += reviewRow('p', f, p[f.key], personSug[f.key]);
+  });
+  html += '</div>';
+
+  if (arr(data.tag_mapping).length) {
+    html += '<div class="add-sec-hd">Tag-Mapping</div><div class="tag-cloud">';
+    arr(data.tag_mapping).slice(0, 18).forEach(function(m) {
+      html += '<span class="tag-map"><strong>' + esc(m.tag || '') + '</strong> → ' + esc(label(m.thema || '')) + '</span>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="add-sec-hd">Einträge</div><div class="review-grid">';
+  if (!data.entries || !data.entries.length) {
+    html += '<div class="readonly-note">Keine Eintragsvorschläge erhalten.</div>';
+  } else {
+    data.entries.forEach(function(sug, i) {
+      html += entryReviewBlock(sug._entry, sug, i);
+    });
+  }
+  html += '</div>';
+
+  html +=
+    '<div class="review-actions">' +
+      '<button id="enhance-apply" class="mini-btn primary" onclick="applyEnhanceSuggestions()">Ausgewählte übernehmen</button>' +
+      '<button class="mini-btn" onclick="cancelEnhance()">Abbrechen</button>' +
+      '<span class="save-msg" id="enhance-msg"></span>' +
+    '</div>';
+
+  box.innerHTML = html;
+  return box;
+}
+
+function enhanceFilterBar(p, pEntries) {
+  if (!pEntries || !pEntries.length) return '';
+  var active = enhanceState.personName === p.name && enhanceState.phase !== 'idle' && enhanceState.phase !== 'saved'
+    ? enhanceState.filterKey
+    : '__none__';
+
+  function chip(key, labelText, count, warn) {
+    var isActive = (active === key || (key === null && active === '__none__' && enhanceState.personName !== p.name)) ? '' : '';
+    var activeClass = (enhanceState.personName === p.name && enhanceState.filterKey === key && enhanceState.phase !== 'idle' && enhanceState.phase !== 'saved') ? ' active' : '';
+    var warnStyle = warn ? ' style="color:var(--am)"' : '';
+    var keyArg = key === null ? '' : "'" + key + "'";
+    return '<button class="mini-btn' + activeClass + '"' + warnStyle + ' onclick="startEnhance(' + keyArg + ')">' +
+      esc(labelText) + (count !== null ? ' <span style="opacity:.55;font-weight:400">(' + count + ')</span>' : '') +
+    '</button>';
+  }
+
+  var cats = KAT_ORDER.filter(function(k) { return pEntries.some(function(x) { return x.kategorie === k; }); });
+  var unchecked = pEntries.filter(entryUnchecked).length;
+
+  var html = '<div class="enhance-filter-bar">' +
+    '<span class="enhance-filter-lbl">Gemini</span>' +
+    chip(null, 'Alle', pEntries.length, false);
+
+  cats.forEach(function(k) {
+    var cnt = pEntries.filter(function(x) { return x.kategorie === k; }).length;
+    html += chip(k, KAT_ICON[k] + ' ' + k, cnt, false);
+  });
+
+  if (unchecked) {
+    html += chip('quellen', '⚑ Quellen prüfen', unchecked, true);
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function profileReviewFields() {
+  return [
+    { key:'lebensprinzip', label:'Lebensprinzip', type:'textarea' },
+    { key:'buchthese', label:'Buchthese', type:'textarea' },
+    { key:'archetyp', label:'Archetyp', type:'text' },
+    { key:'spannung', label:'Spannung', type:'textarea' },
+    { key:'visuelles_motiv', label:'Visuelles Motiv', type:'text' },
+    { key:'format_eignung', label:'Format-Eignung', type:'array', allowed:FORMAT_EIGNUNG },
+    { key:'tags', label:'Tags ergänzen', type:'array' },
+    { key:'kurationsnotiz', label:'Kurationsnotiz', type:'textarea' }
+  ];
+}
+
+function entryReviewFields() {
+  return [
+    { key:'staerke', label:'Stärke', type:'select', options:['','1','2','3','4','5'] },
+    { key:'quellenqualitaet', label:'Quellenqualität', type:'select', options:[''].concat(QUELLENQUALITAET) },
+    { key:'buchreife', label:'Buchreife', type:'select', options:[''].concat(BUCHREIFE) },
+    { key:'themen', label:'Themen', type:'array', allowed:THEMA_LIST },
+    { key:'seitenrolle', label:'Seitenrolle', type:'select', options:[''].concat(SEITENROLLE) },
+    { key:'ton', label:'Ton', type:'text' },
+    { key:'quelle', label:'Quelle (Werk/Biographie)', type:'text' },
+    { key:'quelle_url', label:'Quelle URL', type:'text' },
+    { key:'tags', label:'Tags ergänzen', type:'array' },
+    { key:'buchnotiz', label:'Buchnotiz', type:'textarea' }
+  ];
+}
+
+function reviewRow(scope, f, current, suggestion) {
+  var id = 'enh-' + scope + '-' + f.key;
+  var has = hasSuggestion(suggestion, f.type);
+  var checked = has && fieldEmpty(current, f.key, f.type) ? ' checked' : '';
+  var disabled = has ? '' : ' disabled';
+  return '<div class="review-row">' +
+    '<input type="checkbox" id="' + id + '-use"' + checked + disabled + '>' +
+    '<div class="review-label">' + esc(f.label) + '</div>' +
+    '<div>' +
+      '<div class="review-current">Aktuell: ' + esc(displayValue(current, f.type) || '—') + '</div>' +
+      inputForSuggestion(id, f, suggestion, !has) +
+    '</div>' +
+  '</div>';
+}
+
+function entryReviewBlock(entry, sug, i) {
+  var title = (entry.kategorie || 'Eintrag') + ' · ' + (entry.buch === 'direkt' ? 'Direkt' : 'Hintergrund');
+  var html =
+    '<div class="review-entry" data-entry-id="' + esc(entry.id || '') + '">' +
+      '<div class="review-entry-top">' +
+        '<div><div class="review-entry-title">' + esc(title) + '</div><div class="review-entry-prev">' + esc(entryText(entry) || entry.preview || '') + '</div></div>' +
+        '<span class="pill pill-q">' + esc((i + 1) + '/' + (enhanceState.data.entries || []).length) + '</span>' +
+      '</div>' +
+      '<div class="review-fields">';
+  entryReviewFields().forEach(function(f) {
+    var current = entry[f.key];
+    var suggestion = sug[f.key];
+    if (!hasSuggestion(suggestion, f.type)) return;
+    var id = 'enh-e-' + i + '-' + f.key;
+    var checked = fieldEmpty(current, f.key, f.type) ? ' checked' : '';
+    html += '<div class="review-field">' +
+      '<label><input type="checkbox" id="' + id + '-use"' + checked + '> ' + esc(f.label) + '</label>' +
+      '<div class="review-current">Aktuell: ' + esc(displayValue(current, f.type) || '—') + '</div>' +
+      inputForSuggestion(id, f, suggestion, false) +
+    '</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function inputForSuggestion(id, f, value, disabled) {
+  var dis = disabled ? ' disabled' : '';
+  if (f.type === 'textarea') return '<textarea id="' + id + '" class="ai ai-ta" rows="3"' + dis + '>' + esc(value || '') + '</textarea>';
+  if (f.type === 'select') return '<select id="' + id + '" class="ai ai-sel"' + dis + '>' + opts(f.options || [], String(value || '')) + '</select>';
+  return '<input id="' + id + '" class="ai" value="' + esc(displayValue(value, f.type)) + '"' + dis + '>';
+}
+
+function hasSuggestion(value, type) {
+  if (type === 'array') return arr(value).length > 0;
+  if (value === null || value === undefined) return false;
+  return String(value).trim() !== '';
+}
+
+function displayValue(value, type) {
+  if (type === 'array') return arr(value).map(label).join(', ');
+  return value === null || value === undefined ? '' : String(value);
+}
+
+function fieldEmpty(value, key, type) {
+  if (type === 'array') return arr(value).length === 0;
+  if (key === 'staerke') return strength({ staerke: value }) < 1;
+  if (key === 'quellenqualitaet') return !value || value === 'unbekannt';
+  if (key === 'buchreife') return !value || value === 'roh';
+  if (key === 'seitenrolle') return !value || value === 'unentschieden';
+  if (key === 'quelle' || key === 'quelle_url') return !hasText(value);
+  return !hasText(value);
+}
+
+function valueFromControl(id, f) {
+  var el = document.getElementById(id);
+  var raw = el ? el.value : '';
+  if (f.type === 'array') {
+    var values = splitList(raw);
+    if (f.allowed) values = values.filter(function(v) { return f.allowed.indexOf(v) >= 0 || f.allowed.map(label).indexOf(v) >= 0; }).map(function(v) {
+      var idx = f.allowed.map(label).indexOf(v);
+      return idx >= 0 ? f.allowed[idx] : v;
+    });
+    return unique(values);
+  }
+  if (f.key === 'staerke') return normalizeStrength(raw) || null;
+  if (f.key === 'quellenqualitaet') return cleanChoice(raw, QUELLENQUALITAET, 'unbekannt');
+  if (f.key === 'buchreife') return cleanChoice(raw, BUCHREIFE, 'roh');
+  if (f.key === 'seitenrolle') return cleanChoice(raw, SEITENROLLE, 'unentschieden');
+  return raw;
+}
+
+function applyEnhanceSuggestions() {
+  var p = profilePerson;
+  if (!p || !enhanceState.data) return;
+  var btn = document.getElementById('enhance-apply');
+  var msg = document.getElementById('enhance-msg');
+  if (btn) { btn.disabled = true; btn.textContent = 'Speichert…'; }
+  if (msg) msg.textContent = '';
+
+  var jobs = [];
+  var pPayload = {};
+
+  profileReviewFields().forEach(function(f) {
+    var id = 'enh-p-' + f.key;
+    var use = document.getElementById(id + '-use');
+    if (!use || !use.checked || use.disabled) return;
+    var value = valueFromControl(id, f);
+    if (f.type === 'array') value = unique(arr(p[f.key]).concat(arr(value)));
+    pPayload[f.key] = value;
+  });
+
+  if (Object.keys(pPayload).length) {
+    jobs.push(patchSupa('persons', p, pPayload).then(function(saved) {
+      Object.assign(p, saved || pPayload);
+      profilePerson = p;
+    }));
+  }
+
+  (enhanceState.data.entries || []).forEach(function(sug, i) {
+    var entry = sug._entry;
+    if (!entry) return;
+    var payload = {};
+    entryReviewFields().forEach(function(f) {
+      var id = 'enh-e-' + i + '-' + f.key;
+      var use = document.getElementById(id + '-use');
+      if (!use || !use.checked) return;
+      var value = valueFromControl(id, f);
+      if (f.key === 'tags')   value = unique(arr(entry.tags).concat(arr(value)));
+      if (f.key === 'themen') value = unique(arr(entry.themen).concat(arr(value)));
+      payload[f.key] = value;
+    });
+    if (Object.keys(payload).length) {
+      // Auto-map tags → themen: collect all final tags, derive themes, merge in
+      var finalTags = unique(arr(entry.tags).concat(arr(payload.tags)));
+      var autoThemen = finalTags.map(themeForTag).filter(Boolean);
+      if (autoThemen.length) {
+        payload.themen = unique(arr(payload.themen || entry.themen).concat(autoThemen));
+      }
+      jobs.push(patchSupa('entries', entry, payload).then(function(saved) {
+        Object.assign(entry, saved || payload);
+      }));
+    }
+  });
+
+  if (!jobs.length) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Ausgewählte übernehmen'; }
+    if (msg) msg.textContent = 'Keine Felder ausgewählt.';
+    return;
+  }
+
+  Promise.all(jobs).then(function() {
+    normalizeData();
+    updateStats();
+    enhanceState = { phase: 'saved', personName: p.name, data: null, error: '' };
+    render();
+  }).catch(function(err) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Ausgewählte übernehmen'; }
+    if (msg) msg.textContent = 'Fehler: ' + err.message;
+  });
+}
+
+// ── ENTRIES ──────────────────────────────────────
+function rEntries(main, s) {
+  var data = entries.filter(function(x) {
+    if (fil.kat  && x.kategorie !== fil.kat)  return false;
+    if (fil.buch && x.buch !== fil.buch)       return false;
+    if (fil.reife && x.buchreife !== fil.reife) return false;
+    if (fil.curEntry === 'strong_entries' && strength(x) < 4) return false;
+    if (fil.curEntry === 'unchecked_entries' && !entryUnchecked(x)) return false;
+    if (fil.curEntry === 'unlinked_entries' && !entryUnlinked(x)) return false;
+    return hit(x, s);
+  });
+  document.getElementById('cnt').textContent = data.length + ' Einträge';
+  main.innerHTML = '';
+  if (!data.length) {
+    main.innerHTML = '<div class="empty"><div class="empty-ico">○</div>Keine Einträge gefunden.</div>';
+    return;
+  }
+  data.forEach(function(x) { main.appendChild(mkEntryCard(x, true)); });
+}
+
+function mkEntryCard(x, showPerson) {
+  var kat    = x.kategorie || 'Sonstige';
+  var ciCls  = KAT_CI[kat]   || 'ci-x';
+  var icon   = KAT_ICON[kat] || '·';
+  var bbCls  = x.buch === 'direkt' ? 'bb-d' : 'bb-h';
+  var bbLbl  = x.buch === 'direkt' ? 'Direkt' : 'Hintergrund';
+  var prev   = x.preview || x.quote || x.anekdote || x.fakt || '';
+  var tags   = (x.tags || []).map(function(t) { return '<span class="pill">' + esc(t) + '</span>'; }).join('');
+  var meta   = entryMetaPills(x);
+
+  var d = document.createElement('div'); d.className = 'card';
+  d.innerHTML =
+    '<div class="ch">' +
+      '<div class="ci ' + ciCls + '">' + icon + '</div>' +
+      '<div class="cl">' +
+        (showPerson && x.person
+          ? '<div class="ce-person" data-person="' + esc(x.person) + '">' + esc(x.person) + '</div>'
+          : '') +
+        (prev ? '<div class="ce-prev">' + esc(prev) + '</div>' : '') +
+        '<div class="ce-meta"><span class="buch-badge ' + bbCls + '">' + bbLbl + '</span>' + meta + tags + '</div>' +
+      '</div>' +
+      '<div class="carr">▾</div>' +
+    '</div>' +
+    '<div class="cd"><div class="cd-in">' +
+      (x.quote    ? '<div><div class="lbl">Zitat</div><div class="qt">'       + esc(x.quote)    + '</div></div>' : '') +
+      (x.anekdote ? '<div><div class="lbl">Anekdote</div><div class="val">'   + esc(x.anekdote) + '</div></div>' : '') +
+      (x.fakt     ? '<div><div class="lbl">Fakt</div><div class="val-fakt">'  + esc(x.fakt)     + '</div></div>' : '') +
+      entryCurationHtml(x) +
+      (x.buchnotiz? '<div class="buchnotiz-block"><div class="buchnotiz-lbl">Buchrelevanz</div><div class="buchnotiz-text">' + esc(x.buchnotiz) + '</div></div>' : '') +
+      (x.quelle || x.quelle_url ? '<div class="src">Quelle: ' + esc(x.quelle || '') + (x.quelle_url ? ' · <a href="' + esc(x.quelle_url) + '" target="_blank" rel="noopener">Link</a>' : '') + '</div>' : '') +
+      '<div class="actions"><button class="mini-btn primary entry-enhance-btn">KI-Vorschlag</button><button class="mini-btn entry-edit-btn">Bearbeiten</button></div>' +
+    '</div></div>';
+
+  d.querySelector('.ch').onclick = function(e) {
+    if (e.target.dataset && e.target.dataset.person) {
+      var pp = persons.find(function(p) { return p.name === e.target.dataset.person; });
+      if (pp) showProfile(pp);
+      return;
+    }
+    d.classList.toggle('open');
+  };
+  d.querySelector('.entry-edit-btn').onclick = function(e) {
+    e.stopPropagation();
+    d.classList.add('open');
+    renderEntryEdit(d, x);
+  };
+  d.querySelector('.entry-enhance-btn').onclick = function(e) {
+    e.stopPropagation();
+    d.classList.add('open');
+    renderSingleEntryEnhance(d, x);
+  };
+  return d;
+}
+
+function renderEntryEdit(card, x) {
+  var root = card.querySelector('.cd-in');
+  root.innerHTML = entryEditHtml(x);
+  root.querySelector('.entry-cancel').onclick = function() { render(); };
+  root.querySelector('.entry-save').onclick = function() { saveEntryEdit(root, x); };
+}
+
+function renderSingleEntryEnhance(card, x) {
+  var root = card.querySelector('.cd-in');
+  root.innerHTML =
+    '<div class="enhance-panel" style="margin-bottom:0">' +
+      '<div class="enhance-hd">' +
+        '<div><div class="enhance-title">KI-Vorschlag für diesen Eintrag</div><div class="enhance-sub">Gemini bewertet nur diesen vorhandenen Eintrag. Gespeichert wird erst nach Auswahl.</div></div>' +
+        '<button class="mini-btn entry-cancel">Zurück</button>' +
+      '</div>' +
+      '<div class="enhance-loading">Vorschlag wird erzeugt…</div>' +
+    '</div>';
+  root.querySelector('.entry-cancel').onclick = function() { render(); };
+
+  fetch('/api/enhance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      person: findPersonByName(x.person) || { name: x.person },
+      entries: [entryForEnhance(x)],
+      context: 'Nur diesen einen Eintrag kuratorisch bewerten. Keine Profilfelder nötig, keine neuen Einträge.'
+    })
+  })
+  .then(function(r) {
+    return r.json().then(function(data) {
+      if (data._meta && data._meta.usage && !r.ok) persistAiUsage(data._meta.usage, null, findPersonByName(x.person), 'failed', data.error);
+      if (!r.ok || data.error) throw new Error(data.error || 'KI-Kuration fehlgeschlagen');
+      return data;
+    });
+  })
+  .then(function(data) {
+    if (data._meta && data._meta.usage) persistAiUsage(data._meta.usage, null, findPersonByName(x.person));
+    var sug = normalizeSingleEntrySuggestion((data.entries || [])[0] || {});
+    root.innerHTML = singleEntryEnhanceHtml(x, sug);
+    root.querySelector('.single-enhance-save').onclick = function() { saveSingleEntryEnhance(root, x); };
+    root.querySelectorAll('.single-enhance-cancel').forEach(function(b) { b.onclick = function() { render(); }; });
+  })
+  .catch(function(err) {
+    root.innerHTML =
+      '<div class="enhance-panel" style="margin-bottom:0">' +
+        '<div class="enhance-hd">' +
+          '<div><div class="enhance-title">KI-Vorschlag</div><div class="enhance-sub">Fehler: ' + esc(err.message) + '</div></div>' +
+          '<button class="mini-btn single-enhance-cancel">Zurück</button>' +
+        '</div>' +
+      '</div>';
+    root.querySelector('.single-enhance-cancel').onclick = function() { render(); };
+  });
+}
+
+function normalizeSingleEntrySuggestion(e) {
+  e = e || {};
+  return {
+    staerke: normalizeStrength(e.staerke),
+    quellenqualitaet: cleanChoice(e.quellenqualitaet, QUELLENQUALITAET, ''),
+    buchreife: cleanChoice(e.buchreife, BUCHREIFE, ''),
+    themen: arr(e.themen).filter(function(t) { return THEMA_LIST.indexOf(t) >= 0; }),
+    ton: e.ton || '',
+    seitenrolle: cleanChoice(e.seitenrolle, SEITENROLLE, ''),
+    buchnotiz: e.buchnotiz || '',
+    quelle: e.quelle || '',
+    quelle_url: e.quelle_url || '',
+    tags: arr(e.tags)
+  };
+}
+
+function singleEntryEnhanceHtml(x, sug) {
+  var prefix = 'enh-single-' + String(x.id || 'entry').replace(/[^a-zA-Z0-9_-]/g, '');
+  var html =
+    '<div class="enhance-panel" style="margin-bottom:0">' +
+      '<div class="enhance-hd">' +
+        '<div><div class="enhance-title">Vorschlag prüfen</div><div class="enhance-sub">Häkchen setzen, Werte bei Bedarf ändern, dann übernehmen.</div></div>' +
+        '<button class="mini-btn single-enhance-cancel">Zurück</button>' +
+      '</div>' +
+      '<div class="review-entry-prev">' + esc(entryText(x) || x.preview || '') + '</div>' +
+      '<div class="review-fields" style="margin-top:12px">';
+  var shown = 0;
+  entryReviewFields().forEach(function(f) {
+    var suggestion = sug[f.key];
+    if (!hasSuggestion(suggestion, f.type)) return;
+    shown++;
+    var id = prefix + '-' + f.key;
+    var checked = fieldEmpty(x[f.key], f.key, f.type) ? ' checked' : '';
+    html += '<div class="review-field">' +
+      '<label><input type="checkbox" id="' + id + '-use"' + checked + '> ' + esc(f.label) + '</label>' +
+      '<div class="review-current">Aktuell: ' + esc(displayValue(x[f.key], f.type) || '—') + '</div>' +
+      inputForSuggestion(id, f, suggestion, false) +
+    '</div>';
+  });
+  if (!shown) html += '<div class="readonly-note">Gemini hat keine nutzbaren Felder vorgeschlagen.</div>';
+  html += '</div>' +
+    '<div class="entry-edit-actions">' +
+      '<button class="mini-btn primary single-enhance-save" data-prefix="' + esc(prefix) + '">Ausgewählte übernehmen</button>' +
+      '<button class="mini-btn single-enhance-cancel">Abbrechen</button>' +
+      '<span class="save-msg"></span>' +
+    '</div>' +
+  '</div>';
+  return html;
+}
+
+function saveSingleEntryEnhance(root, x) {
+  var btn = root.querySelector('.single-enhance-save');
+  var msg = root.querySelector('.save-msg');
+  var prefix = btn.getAttribute('data-prefix');
+  var payload = {};
+  entryReviewFields().forEach(function(f) {
+    var id = prefix + '-' + f.key;
+    var use = document.getElementById(id + '-use');
+    if (!use || !use.checked) return;
+    var value = valueFromControl(id, f);
+    if (f.key === 'tags')   value = unique(arr(x.tags).concat(arr(value)));
+    if (f.key === 'themen') value = unique(arr(x.themen).concat(arr(value)));
+    payload[f.key] = value;
+  });
+  if (!Object.keys(payload).length) {
+    if (msg) msg.textContent = 'Keine Felder ausgewählt.';
+    return;
+  }
+  // Auto-map tags → themen
+  var finalTags = unique(arr(x.tags).concat(arr(payload.tags)));
+  var autoThemen = finalTags.map(themeForTag).filter(Boolean);
+  if (autoThemen.length) {
+    payload.themen = unique(arr(payload.themen || x.themen).concat(autoThemen));
+  }
+  btn.disabled = true; btn.textContent = 'Speichert…';
+  patchSupa('entries', x, payload).then(function(saved) {
+    Object.assign(x, saved || payload);
+    normalizeData();
+    render();
+  }).catch(function(err) {
+    btn.disabled = false; btn.textContent = 'Ausgewählte übernehmen';
+    if (msg) msg.textContent = 'Fehler: ' + err.message;
+  });
+}
+
+function entryEditHtml(x) {
+  return '<div class="entry-edit">' +
+    (tableAvailability.books === true ? '<div class="add-fld"><label class="add-lbl">Person-Zuordnung</label><select name="person_id" class="ai ai-sel">' + personOptions(x.person_id) + '</select></div>' : '') +
+    '<div class="form-grid three">' +
+      '<div class="add-fld"><label class="add-lbl">Kategorie</label><select name="kategorie" class="ai ai-sel">' + opts(['Anekdote','Zitat','Fakt','Stil'], x.kategorie || 'Anekdote') + '</select></div>' +
+      '<div class="add-fld"><label class="add-lbl">Buch</label><select name="buch" class="ai ai-sel">' + opts(['hintergrund','direkt'], x.buch || 'hintergrund') + '</select></div>' +
+      '<div class="add-fld"><label class="add-lbl">Stärke</label><select name="staerke" class="ai ai-sel">' + opts(['','1','2','3','4','5'], String(x.staerke || '')) + '</select></div>' +
+    '</div>' +
+    '<div class="add-fld"><label class="add-lbl">Text</label><textarea name="text" class="ai ai-ta" rows="4">' + esc(entryText(x)) + '</textarea></div>' +
+    '<div class="form-grid">' +
+      '<div class="add-fld"><label class="add-lbl">Quelle</label><input name="quelle" class="ai" value="' + esc(x.quelle || '') + '"></div>' +
+      '<div class="add-fld"><label class="add-lbl">Quelle URL</label><input name="quelle_url" class="ai" value="' + esc(x.quelle_url || '') + '"></div>' +
+      '<div class="add-fld"><label class="add-lbl">Quellenqualität</label><select name="quellenqualitaet" class="ai ai-sel">' + opts(QUELLENQUALITAET, x.quellenqualitaet || 'unbekannt') + '</select></div>' +
+      '<div class="add-fld"><label class="add-lbl">Buchreife</label><select name="buchreife" class="ai ai-sel">' + opts(BUCHREIFE, x.buchreife || 'roh') + '</select></div>' +
+      '<div class="add-fld"><label class="add-lbl">Seitenrolle</label><select name="seitenrolle" class="ai ai-sel">' + opts(SEITENROLLE, x.seitenrolle || 'unentschieden') + '</select></div>' +
+      '<div class="add-fld"><label class="add-lbl">Ton</label><input name="ton" class="ai" value="' + esc(x.ton || '') + '"></div>' +
+    '</div>' +
+    '<div class="add-fld"><label class="add-lbl">Themen</label>' + checkGroup('entry-themen', THEMA_LIST, arr(x.themen)) + '</div>' +
+    '<div class="add-fld"><label class="add-lbl">Tags</label><input name="tags" class="ai" value="' + esc(arr(x.tags).join(', ')) + '"></div>' +
+    '<div class="add-fld"><label class="add-lbl">Buchnotiz</label><textarea name="buchnotiz" class="ai ai-ta" rows="3">' + esc(x.buchnotiz || '') + '</textarea></div>' +
+    '<div class="entry-edit-actions">' +
+      '<button class="mini-btn primary entry-save">Speichern</button>' +
+      '<button class="mini-btn entry-cancel">Abbrechen</button>' +
+      '<span class="save-msg"></span>' +
+    '</div>' +
+  '</div>';
+}
+
+function saveEntryEdit(root, x) {
+  var btn = root.querySelector('.entry-save');
+  btn.disabled = true; btn.textContent = 'Speichert…';
+  var data = {
+    person: x.person,
+    person_id: x.person_id || null,
+    kategorie: root.querySelector('[name="kategorie"]').value,
+    buch: root.querySelector('[name="buch"]').value,
+    text: root.querySelector('[name="text"]').value,
+    quelle: root.querySelector('[name="quelle"]').value,
+    quelle_url: root.querySelector('[name="quelle_url"]').value,
+    tags: splitList(root.querySelector('[name="tags"]').value),
+    staerke: root.querySelector('[name="staerke"]').value,
+    quellenqualitaet: root.querySelector('[name="quellenqualitaet"]').value,
+    buchreife: root.querySelector('[name="buchreife"]').value,
+    themen: getCheckedIn(root, 'entry-themen'),
+    ton: root.querySelector('[name="ton"]').value,
+    seitenrolle: root.querySelector('[name="seitenrolle"]').value,
+    buchnotiz: root.querySelector('[name="buchnotiz"]').value
+  };
+  var personSelect = root.querySelector('[name="person_id"]');
+  if (personSelect) {
+    data.person_id = personSelect.value || null;
+    var mappedPerson = personById(data.person_id);
+    if (mappedPerson) data.person = mappedPerson.name;
+  }
+  var payload = entryPayload(data);
+  patchSupa('entries', x, payload).then(function(saved) {
+    Object.assign(x, saved || payload);
+    render();
+  }).catch(function(err) {
+    btn.disabled = false; btn.textContent = 'Speichern';
+    root.querySelector('.save-msg').textContent = 'Fehler: ' + err.message;
+  });
+}
+
+// ── PLACES ───────────────────────────────────────
+function rPlaces(main, s) {
+  var data = places.filter(function(p) { return hit(p, s); });
+  document.getElementById('cnt').textContent = data.length + ' Orte';
+  main.innerHTML = '';
+  if (!data.length) {
+    main.innerHTML = '<div class="empty"><div class="empty-ico">○</div>Keine Orte gefunden.</div>';
+    return;
+  }
+  var wrap = document.createElement('div'); wrap.className = 'places-wrap';
+  var tbl  = document.createElement('table'); tbl.className = 'ptbl';
+  tbl.innerHTML = '<thead><tr><th>Name</th><th>Ort / Region</th><th>Notiz</th></tr></thead>';
+  var tb = document.createElement('tbody');
+  data.forEach(function(p) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + esc(p.name) + '</td>' +
+      '<td>' + esc(p.location || '—') + '</td>' +
+      '<td>' + esc(p.note || '') + '</td>';
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb); wrap.appendChild(tbl); main.appendChild(wrap);
+}
+
+// ── UTILS ─────────────────────────────────────────
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function label(v) { return LABEL[v] || v; }
+function hasText(v) { return !!String(v || '').trim(); }
+function arr(v) {
+  if (Array.isArray(v)) return v.filter(function(x) { return x !== null && x !== undefined && String(x).trim() !== ''; });
+  if (!v) return [];
+  if (typeof v === 'string') {
+    var s = v.trim();
+    if (!s) return [];
+    if (s.charAt(0) === '[') {
+      try { return arr(JSON.parse(s)); } catch(e) {}
+    }
+    return s.split(',').map(function(x) { return x.trim(); }).filter(Boolean);
+  }
+  return [];
+}
+function splitList(s) { return arr(s); }
+function unique(xs) {
+  var seen = {};
+  return arr(xs).filter(function(x) {
+    var key = String(x).toLowerCase();
+    if (seen[key]) return false;
+    seen[key] = true;
+    return true;
+  });
+}
+function val(id) {
+  var el = document.getElementById(id);
+  return el ? el.value : '';
+}
+function opts(values, current) {
+  return values.map(function(v) {
+    var selected = String(current || '') === String(v) ? ' selected' : '';
+    var text = v === '' ? '—' : label(v);
+    return '<option value="' + esc(v) + '"' + selected + '>' + esc(text) + '</option>';
+  }).join('');
+}
+function personOptions(current) {
+  var html = '<option value="">— Zuordnung offen —</option>';
+  return html + persons.slice().sort(function(a,b){ return String(a.name).localeCompare(String(b.name), 'de'); }).map(function(p) {
+    return '<option value="' + esc(p.id) + '"' + (String(current || '') === String(p.id) ? ' selected' : '') + '>' + esc(p.name) + '</option>';
+  }).join('');
+}
+function checkGroup(name, values, selected) {
+  selected = arr(selected);
+  return '<div class="checkgrid">' + values.map(function(v) {
+    var checked = selected.indexOf(v) >= 0 ? ' checked' : '';
+    return '<label class="checkchip"><input type="checkbox" name="' + esc(name) + '" value="' + esc(v) + '"' + checked + '> ' + esc(label(v)) + '</label>';
+  }).join('') + '</div>';
+}
+function getChecked(name) {
+  return Array.prototype.slice.call(document.querySelectorAll('input[name="' + name + '"]:checked')).map(function(x) { return x.value; });
+}
+function getCheckedIn(root, name) {
+  return Array.prototype.slice.call(root.querySelectorAll('input[name="' + name + '"]:checked')).map(function(x) { return x.value; });
+}
+
+function curationItem(title, value, full, emphasis, alwaysFull) {
+  var cls = full || alwaysFull ? ' full' : '';
+  var valCls = emphasis ? 'curation-val em' : 'curation-val';
+  var text = hasText(value) ? '<div class="' + valCls + '">' + esc(value) + '</div>' : '<div class="curation-empty">Noch offen</div>';
+  return '<div class="curation-item' + cls + '"><div class="lbl">' + esc(title) + '</div>' + text + '</div>';
+}
+
+function strength(x) {
+  var n = Number(x && x.staerke);
+  return isNaN(n) ? 0 : n;
+}
+function entryUnchecked(x) {
+  return !x.quellenqualitaet || x.quellenqualitaet === 'unbekannt';
+}
+function entryText(x) {
+  if (x.kategorie === 'Zitat') return x.quote || x.anekdote || x.fakt || '';
+  if (x.kategorie === 'Fakt') return x.fakt || x.anekdote || x.quote || '';
+  return x.anekdote || x.quote || x.fakt || x.text || '';
+}
+function entryMetaPills(x) {
+  var bits = '';
+  if (strength(x) >= 4) bits += '<span class="pill pill-s">Stärke ' + strength(x) + '</span>';
+  else if (strength(x) > 0) bits += '<span class="pill">Stärke ' + strength(x) + '</span>';
+  if (x.buchreife) bits += '<span class="pill pill-q">' + esc(label(x.buchreife)) + '</span>';
+  if (entryUnchecked(x)) bits += '<span class="pill pill-w">Quelle offen</span>';
+  if (entryUnlinked(x)) bits += '<span class="pill pill-w">Zuordnung offen</span>';
+  return bits;
+}
+function entryUnlinked(x) {
+  return tableAvailability.books === true && !x.person_id;
+}
+function entryCurationHtml(x) {
+  var hasCur = strength(x) || x.quellenqualitaet || x.buchreife || arr(x.themen).length || x.ton || x.seitenrolle;
+  if (!hasCur) return '';
+  return '<div class="entry-curation">' +
+    '<div><div class="lbl">Stärke</div><div class="val">' + (strength(x) || '—') + '</div></div>' +
+    '<div><div class="lbl">Buchreife</div><div class="val">' + esc(label(x.buchreife || 'roh')) + '</div></div>' +
+    '<div><div class="lbl">Quelle</div><div class="val">' + esc(label(x.quellenqualitaet || 'unbekannt')) + '</div></div>' +
+    '<div><div class="lbl">Seitenrolle</div><div class="val">' + esc(label(x.seitenrolle || 'unentschieden')) + '</div></div>' +
+    (x.ton ? '<div><div class="lbl">Ton</div><div class="val">' + esc(x.ton) + '</div></div>' : '') +
+    (arr(x.themen).length ? '<div class="full"><div class="lbl">Themen</div><div class="ce-meta">' + arr(x.themen).map(function(t) { return '<span class="pill">' + esc(label(t)) + '</span>'; }).join('') + '</div></div>' : '') +
+  '</div>';
+}
+
+function personEntries(p) {
+  return entries.filter(function(x) {
+    if (x.person_id && p.id) return String(x.person_id) === String(p.id);
+    return x.person === p.name;
+  });
+}
+function findPersonByName(name) {
+  var n = String(name || '').toLowerCase().trim();
+  if (!n) return null;
+  return persons.find(function(p) { return String(p.name || '').toLowerCase().trim() === n; }) || null;
+}
+function showProfileByName(name) {
+  var p = findPersonByName(name);
+  if (p) showProfile(p);
+}
+function cleanChoice(v, allowed, fallback) {
+  return allowed.indexOf(v) >= 0 ? v : fallback;
+}
+function normalizeStrength(v) {
+  var n = Number(v);
+  return n >= 1 && n <= 5 ? n : '';
+}
+function normalizePersonSuggestion(p) {
+  p = p || {};
+  return {
+    name: p.name || '',
+    kategorie: p.kategorie || '',
+    dates: p.dates || '',
+    status: p.status || 'kandidat',
+    tags: arr(p.tags),
+    note: p.note || '',
+    lebensprinzip: p.lebensprinzip || '',
+    buchthese: p.buchthese || '',
+    archetyp: p.archetyp || '',
+    spannung: p.spannung || '',
+    visuelles_motiv: p.visuelles_motiv || '',
+    format_eignung: arr(p.format_eignung).filter(function(t) { return FORMAT_EIGNUNG.indexOf(t) >= 0; }),
+    kurationsnotiz: p.kurationsnotiz || ''
+  };
+}
+function mergePersonSuggestion(existing, incoming) {
+  var p = normalizePersonSuggestion(existing);
+  p.name = existing.name || incoming.name || '';
+  ['kategorie','dates','status','note','lebensprinzip','buchthese','archetyp','spannung','visuelles_motiv','kurationsnotiz'].forEach(function(k) {
+    if (!hasText(p[k]) && hasText(incoming[k])) p[k] = incoming[k];
+  });
+  p.tags = unique(arr(existing.tags).concat(arr(incoming.tags)));
+  p.format_eignung = unique(arr(existing.format_eignung).concat(arr(incoming.format_eignung)));
+  return p;
+}
+function personReadiness(p) {
+  var pe = personEntries(p);
+  var hasA = pe.some(function(x) { return x.kategorie === 'Anekdote'; });
+  var hasZ = pe.some(function(x) { return x.kategorie === 'Zitat'; });
+  var hasStrong = pe.some(function(x) { return strength(x) >= 4; });
+  var unchecked = pe.some(entryUnchecked);
+  return {
+    hasA: hasA,
+    hasZ: hasZ,
+    hasStrong: hasStrong,
+    hasPrinciple: hasText(p.lebensprinzip),
+    hasThesis: hasText(p.buchthese),
+    hasVisual: hasText(p.visuelles_motiv),
+    hasFormat: arr(p.format_eignung).length > 0,
+    sourceOk: pe.length > 0 && !unchecked,
+    ready: hasText(p.lebensprinzip) && hasText(p.buchthese) && hasA && hasZ && hasStrong
+  };
+}
+function personMatchesCuration(p, key) {
+  var r = personReadiness(p);
+  if (key === 'fehlende_these') return !r.hasThesis;
+  if (key === 'starke_personen') return r.hasStrong;
+  if (key === 'ungepruefte_quellen') return !r.sourceOk;
+  if (key === 'formatbereit') return r.hasFormat;
+  if (key === 'buchreif') return r.ready;
+  return true;
+}
+
+function supaHeaders(prefer) {
+  return {
+    'apikey': SK,
+    'Authorization': 'Bearer ' + SK,
+    'Content-Type': 'application/json',
+    'Prefer': prefer || 'return=representation'
+  };
+}
+function parseSupaErr(t) {
+  try { var j = JSON.parse(t); return j.message || j.details || t; } catch(e) { return t; }
+}
+function handleSupa(r) {
+  if (!r.ok) return r.text().then(function(t) { throw new Error(parseSupaErr(t) || 'Supabase-Fehler'); });
+  if (r.status === 204) return null;
+  return r.text().then(function(t) {
+    if (!t) return null;
+    try { var data = JSON.parse(t); return Array.isArray(data) ? data[0] : data; } catch(e) { return null; }
+  });
+}
+function matchQuery(table, item) {
+  if (item && item.id) return 'id=eq.' + encodeURIComponent(item.id);
+  if (table === 'persons' && item && item.name) return 'name=eq.' + encodeURIComponent(item.name);
+  if (table === 'entries' && item && item.created_at) return 'created_at=eq.' + encodeURIComponent(item.created_at);
+  if (table === 'entries' && item && item.person && item.preview) {
+    return 'person=eq.' + encodeURIComponent(item.person) + '&preview=eq.' + encodeURIComponent(item.preview);
+  }
+  throw new Error('Kein stabiler Schlüssel für Update gefunden. Bitte die Datenbankmigration mit id-Spalten anwenden.');
+}
+function patchSupa(table, item, payload) {
+  return fetch(SB + '/rest/v1/' + table + '?' + matchQuery(table, item), {
+    method: 'PATCH',
+    headers: supaHeaders('return=representation'),
+    body: JSON.stringify(payload)
+  }).then(handleSupa);
+}
+function insertSupa(table, payload) {
+  return fetch(SB + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: supaHeaders('return=representation'),
+    body: JSON.stringify(payload)
+  }).then(handleSupa);
+}
+function claimResearchJob(job) {
+  return fetch(SB + '/rest/v1/rpc/claim_research_job', {
+    method:'POST', headers:supaHeaders('return=representation'),
+    body:JSON.stringify({ p_job_id:job && job.id ? job.id : null })
+  }).then(handleSupa);
+}
+
+function personPayload(p, includeName) {
+  var obj = {
+    kategorie: p.kategorie || '',
+    dates: p.dates || '',
+    status: p.status || 'kandidat',
+    tags: arr(p.tags),
+    note: p.note || '',
+    lebensprinzip: p.lebensprinzip || '',
+    buchthese: p.buchthese || '',
+    archetyp: p.archetyp || '',
+    spannung: p.spannung || '',
+    visuelles_motiv: p.visuelles_motiv || '',
+    format_eignung: arr(p.format_eignung),
+    kurationsnotiz: p.kurationsnotiz || ''
+  };
+  if (includeName) obj.name = p.name || '';
+  return obj;
+}
+function entryPayload(e) {
+  var kat = e.kategorie || 'Anekdote';
+  var text = e.text || '';
+  var obj = {
+    person: e.person,
+    kategorie: kat,
+    buch: e.buch || 'hintergrund',
+    quelle: e.quelle || null,
+    quelle_url: e.quelle_url || null,
+    tags: arr(e.tags),
+    preview: text.slice(0, 120),
+    staerke: e.staerke ? Number(e.staerke) : null,
+    quellenqualitaet: e.quellenqualitaet || 'unbekannt',
+    buchreife: e.buchreife || 'roh',
+    themen: arr(e.themen),
+    ton: e.ton || '',
+    seitenrolle: e.seitenrolle || 'unentschieden',
+    buchnotiz: e.buchnotiz || '',
+    quote: null,
+    anekdote: null,
+    fakt: null
+  };
+  if (tableAvailability.books === true) obj.person_id = e.person_id || null;
+  if (kat === 'Zitat') obj.quote = text;
+  else if (kat === 'Fakt') obj.fakt = text;
+  else obj.anekdote = text;
+  return obj;
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    document.getElementById('srch').focus();
+  }
+  if (e.key === 'Escape' && view === 'profile') goTab('persons');
+});
+
+// ── BIO FORMATTER ─────────────────────────────────
+function formatBio(note) {
+  if (!note) return '';
+
+  // Protect abbreviations that contain ". " but aren't sentence ends
+  var abbrs = ['St','Dr','Mr','Mrs','Prof','Nr','Jr','Sr','vs','ca','Abb','evtl','bzw','sog','u.a','z.B'];
+  var protectedText = note;
+  abbrs.forEach(function(a) {
+    // Replace "Abbr. " with placeholder
+    var re = new RegExp(a + '\\.( )', 'g');
+    protectedText = protectedText.replace(re, a + '\x02$1');
+  });
+  // Also protect ordinal numbers: "5. Juli", "17. März" etc.
+  protectedText = protectedText.replace(/(\d)\. ([A-Za-züäöÜÄÖ])/g, '$1\x02 $2');
+
+  // Split at true sentence boundaries:
+  // lowercase/digit/closing-paren + ". " + uppercase
+  protectedText = protectedText.replace(/([a-züäöß\d\)])\. ([A-ZÜÄÖ"])/g, '$1.\x01$2');
+
+  var parts = protectedText.split('\x01');
+
+  // Restore protected abbreviations
+  var sentences = parts.map(function(s) {
+    return s.replace(/\x02/g, '.').trim();
+  }).filter(Boolean);
+
+  if (sentences.length <= 1) {
+    return '<div class="bio-kicker">' + esc(note) + '</div>';
+  }
+
+  // First sentence → kicker
+  var html = '<div class="bio-kicker">' + esc(sentences[0]) + '</div><div class="bio-body">';
+
+  // Remaining → group 3 per paragraph
+  var rest = sentences.slice(1);
+  for (var i = 0; i < rest.length; i += 3) {
+    html += '<p>' + rest.slice(i, i + 3).map(function(s) { return esc(s); }).join(' ') + '</p>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+// ── STATUS / ÜBERSICHT ───────────────────────────
+function activeBook() {
+  return books.find(function(b) { return b.status === 'active' || b.status === 'pilot'; }) || books[0] || null;
+}
+
+function personById(id) {
+  return persons.find(function(p) { return String(p.id) === String(id); }) || null;
+}
+
+function candidateFor(p) {
+  var book = activeBook();
+  if (!book || !p) return null;
+  return bookCandidates.find(function(c) {
+    return String(c.book_id) === String(book.id) && String(c.person_id) === String(p.id);
+  }) || null;
+}
+
+function fitScore(c) {
+  if (!c || !FIT_FIELDS.every(function(f) { return c[f[0]] !== null && c[f[0]] !== undefined; })) return null;
+  return FIT_FIELDS.reduce(function(sum, f) { return sum + Number(c[f[0]] || 0); }, 0);
+}
+
+function fitLabel(score) {
+  if (score >= 10) return 'Kernkandidat';
+  if (score >= 7) return 'Starker Fit';
+  if (score >= 4) return 'Noch offen';
+  return 'Parken prüfen';
+}
+
+function dossierModel(p) {
+  var pe = personEntries(p);
+  var scenes = pe.filter(function(x) { return x.kategorie === 'Anekdote'; }).length;
+  var reliableQuote = pe.some(function(x) {
+    return x.kategorie === 'Zitat' && hasText(x.quelle) && ['primaer','geprueft'].indexOf(x.quellenqualitaet) >= 0;
+  });
+  var checks = [
+    ['Buchthese', hasText(p.buchthese)],
+    ['Lebensprinzip', hasText(p.lebensprinzip)],
+    ['Widerspruch / Preis', hasText(p.spannung)],
+    ['Zwei konkrete Szenen', scenes >= 2],
+    ['Belastbares Zitat', reliableQuote],
+    ['Quellen geprüft', pe.length > 0 && pe.every(function(x) { return !entryUnchecked(x); })],
+    ['Visuelles Motiv', hasText(p.visuelles_motiv)],
+    ['Redaktionelles Fazit', hasText(p.kurationsnotiz)]
+  ];
+  return { checks: checks, count: checks.filter(function(x) { return x[1]; }).length };
+}
+
+function openSourceCount() {
+  return entries.filter(entryUnchecked).length;
+}
+
+function rPilot(main) {
+  main.innerHTML = '';
+  var book = activeBook();
+  if (!book) {
+    main.innerHTML = '<div class="empty"><div class="empty-ico">○</div>Die Pilotband-Struktur ist vorbereitet. Bitte zuerst die neue Datenbankmigration anwenden.</div>';
+    return;
+  }
+  var candidates = bookCandidates.filter(function(c) { return String(c.book_id) === String(book.id); });
+  var evaluated = candidates.filter(function(c) { return fitScore(c) !== null; }).length;
+  var selected = candidates.filter(function(c) { return c.stage === 'selected'; }).length;
+  var shortlist = candidates.filter(function(c) { return c.stage === 'shortlist'; }).length;
+  var wrap = document.createElement('div');
+  var html = '<section class="pilot-hero">' +
+    '<div class="pilot-kicker">Pilotband · ' + esc(book.working_title || book.title || 'Living Well') + '</div>' +
+    '<h1 class="pilot-title">Ein breiter erster Band, eine präzise Frage.</h1>' +
+    '<p class="pilot-thesis">„' + esc(book.thesis || PILOT_THESIS) + '“</p>' +
+    '<p class="pilot-note">Der Personenpool bleibt offen. Hier wird nur entschieden, wer für diesen Band trägt.</p>' +
+  '</section>' +
+  '<div class="metric-grid">' + dashMetric(persons.length, 'Personen im Pool') + dashMetric(evaluated, 'Bewertet') + dashMetric(shortlist, 'Shortlist') + dashMetric(selected, 'Im Pilot') + '</div>' +
+  '<div class="pilot-board">';
+  CANDIDATE_STAGES.forEach(function(stage) {
+    var list = candidates.filter(function(c) { return c.stage === stage; }).sort(function(a,b) { return fitScore(b) - fitScore(a); });
+    html += '<section class="pilot-col"><div class="pilot-col-hd"><span>' + esc(STAGE_LABELS[stage]) + '</span><span>' + list.length + '</span></div>';
+    if (!list.length) html += '<div class="readonly-note">Noch leer</div>';
+    list.forEach(function(c) {
+      var p = personById(c.person_id); if (!p) return;
+      var score = fitScore(c), dossier = dossierModel(p);
+      html += '<button class="candidate-card" data-pilot-person="' + esc(p.id) + '">' +
+        '<div class="candidate-name">' + esc(p.name) + '</div>' +
+        '<div class="candidate-meta">Dossier ' + dossier.count + '/8 · ' + esc(p.kategorie || 'noch ohne Kategorie') + '</div>' +
+        '<span class="fit-pill ' + (score >= 7 ? 'strong' : '') + '">' + (score === null ? 'Noch unbewertet' : score + '/12 · ' + fitLabel(score)) + '</span>' +
+      '</button>';
+    });
+    html += '</section>';
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('[data-pilot-person]').forEach(function(el) {
+    el.onclick = function() { var p = personById(el.getAttribute('data-pilot-person')); if (p) showProfile(p); };
+  });
+  main.appendChild(wrap);
+}
+
+function renderFitPanel(p) {
+  var book = activeBook(), c = candidateFor(p), panel = document.createElement('section');
+  panel.className = 'fit-panel';
+  if (!book) {
+    panel.innerHTML = '<div class="dash-card-title">Pilotband-Passung</div><div class="readonly-note">Datenbankmigration noch nicht angewendet.</div>';
+    return panel;
+  }
+  if (!c) {
+    panel.innerHTML = '<div class="fit-head"><div><div class="dash-card-title">Pilotband-Passung</div><div class="dash-card-note">Die Person bleibt im Pool, bis sie für den Pilotband geprüft wird.</div></div><button class="mini-btn primary" onclick="addToPilot()">Für Pilot prüfen</button></div>';
+    return panel;
+  }
+  var score = fitScore(c), d = dossierModel(p);
+  var fields = FIT_FIELDS.map(function(f) {
+    var current = c[f[0]] === null || c[f[0]] === undefined ? '' : String(c[f[0]]);
+    return '<div class="fit-field"><label for="fit-' + f[0] + '">' + esc(f[1]) + '</label><select id="fit-' + f[0] + '">' + opts(['','0','1','2'], current) + '</select></div>';
+  }).join('');
+  panel.innerHTML = '<div class="fit-head"><div><div class="dash-card-title">Passung für den Pilotband</div><div class="dash-card-note">Bandbezogener Fit – getrennt vom Recherchefortschritt.</div></div><div class="fit-score">' + (score === null ? 'offen' : score + '/12') + '</div></div>' +
+    '<div class="fit-grid">' + fields + '</div>' +
+    '<div class="form-grid" style="margin-top:10px"><div class="add-fld"><label class="add-lbl">Auswahlstatus</label><select id="fit-stage" class="ai ai-sel">' + opts(CANDIDATE_EDIT_STAGES, c.stage || 'pool') + '</select></div>' +
+    '<div class="add-fld"><label class="add-lbl">Bewertung</label><select id="fit-origin" class="ai ai-sel">' + opts(['manual','ai','hybrid','import'], c.review_origin || 'manual') + '</select></div></div>' +
+    '<div class="add-fld"><label class="add-lbl">Begründung</label><textarea id="fit-rationale" class="ai ai-ta" rows="2">' + esc(c.rationale || '') + '</textarea></div>' +
+    '<div class="actions"><button id="fit-save" class="mini-btn primary" onclick="savePilotFit()">Fit speichern</button><span class="save-msg">Dossier ' + d.count + '/8</span></div>' +
+    '<div class="dossier-row">' + d.checks.map(function(x) { return '<span class="dossier-check ' + (x[1] ? '' : 'miss') + '">' + (x[1] ? '✓ ' : '○ ') + esc(x[0]) + '</span>'; }).join('') + '</div>';
+  return panel;
+}
+
+function addToPilot() {
+  var book = activeBook(), p = profilePerson;
+  if (!book || !p) return;
+  insertSupa('book_candidates', { book_id: book.id, person_id: p.id, stage: 'pruefen', review_origin: 'manual' }).then(function(saved) {
+    bookCandidates.push(saved);
+    render();
+  }).catch(function(err) { alert('Pilot-Zuordnung fehlgeschlagen: ' + err.message); });
+}
+
+function savePilotFit() {
+  var c = candidateFor(profilePerson); if (!c) return;
+  var payload = { stage: val('fit-stage'), review_origin: val('fit-origin'), rationale: val('fit-rationale') };
+  FIT_FIELDS.forEach(function(f) { var raw = val('fit-' + f[0]); payload[f[0]] = raw === '' ? null : Number(raw); });
+  var btn = document.getElementById('fit-save'); btn.disabled = true; btn.textContent = 'Speichert…';
+  patchSupa('book_candidates', c, payload).then(function(saved) {
+    Object.assign(c, saved || payload); updateStats(); render();
+  }).catch(function(err) { btn.disabled = false; btn.textContent = 'Fit speichern'; alert('Fit konnte nicht gespeichert werden: ' + err.message); });
+}
+
+function rStatus(main) {
+  main.innerHTML = '';
+  var models = persons.map(function(p) {
+    var base = personDashboardModel(p);
+    base.dossier = dossierModel(p);
+    base.candidate = candidateFor(p);
+    base.fit = fitScore(base.candidate);
+    return base;
+  });
+  var openJobs = researchJobs.filter(function(j) { return ['captured','queued','running','review'].indexOf(j.status) >= 0; });
+  var totalCost = aiRuns.reduce(function(sum, x) { return sum + Number(x.estimated_cost_eur || 0); }, 0);
+  var highWork = models.filter(function(m) { return m.counts.total > 0 && m.dossier.count < 7; })
+    .sort(function(a,b) { return (b.counts.total - a.counts.total) || (a.dossier.count - b.dossier.count); }).slice(0,8);
+  var topCandidates = models.filter(function(m) { return m.fit !== null; })
+    .sort(function(a,b) { return b.fit - a.fit; }).slice(0,8);
+
+  var wrap = document.createElement('div');
+  wrap.innerHTML =
+    '<div class="dash-hero">' +
+      '<div class="dash-title">Dein Arbeitsplatz</div>' +
+      '<div class="dash-copy">Schnell Namen sammeln, Recherche prüfen und den Pilotband kuratieren. Der Pool bleibt breit; Auswahl und Dossierfortschritt werden bewusst getrennt.</div>' +
+      '<div class="actions" style="margin-top:14px"><button class="mini-btn primary" onclick="openCapture()">+ Namen erfassen</button><button class="mini-btn" onclick="goTab(\'pilot\')">Pilotband öffnen</button></div>' +
+    '</div>' +
+    '<div class="metric-grid">' +
+      dashMetric(persons.length, 'Personen im Pool') +
+      dashMetric(openJobs.length, 'Recherche offen') +
+      dashMetric(openSourceCount(), 'Quellen offen') +
+      dashMetric(formatEuro(totalCost), 'KI-Kosten erfasst') +
+    '</div>' +
+    '<div class="dash-grid">' +
+      '<div class="dash-card">' +
+        '<div class="dash-card-hd"><div><div class="dash-card-title">Nächste Dossierarbeit</div><div class="dash-card-note">Viel Material, aber konkrete Pflichtpunkte fehlen.</div></div></div>' +
+        queueList(highWork, true) +
+      '</div>' +
+      '<div class="dash-card">' +
+        '<div class="dash-card-hd"><div><div class="dash-card-title">Stärkste Pilot-Fits</div><div class="dash-card-note">Kuratorische Passung, unabhängig vom Recherchefortschritt.</div></div></div>' +
+        queueList(topCandidates, false) +
+      '</div>' +
+    '</div>' +
+    '<div class="dash-grid">' +
+      '<div class="dash-card">' +
+        '<div class="dash-card-hd"><div><div class="dash-card-title">Recherche-Workflow</div><div class="dash-card-note">Name bleibt gespeichert, auch wenn die Anreicherung scheitert.</div></div></div>' +
+        researchJobsHtml(openJobs) +
+      '</div>' +
+      '<div class="dash-card">' +
+        '<div class="dash-card-hd"><div><div class="dash-card-title">KI-Verbrauch</div><div class="dash-card-note">Token, Modell und geschätzte Grenzkosten pro Lauf; freie Search-Kontingente können die echte Rechnung senken.</div></div></div>' +
+        aiRunsHtml() +
+      '</div>' +
+    '</div>';
+
+  main.appendChild(wrap);
+  bindDashboardActions(wrap);
+}
+
+function formatEuro(n) {
+  return Number(n || 0).toLocaleString('de-DE', { style:'currency', currency:'EUR', minimumFractionDigits: n < 1 ? 3 : 2, maximumFractionDigits: n < 1 ? 3 : 2 });
+}
+
+function researchJobsHtml(jobs) {
+  if (!jobs.length) return '<div class="readonly-note">Keine offenen Jobs.</div>';
+  return '<div class="queue-list">' + jobs.slice(-8).reverse().map(function(j) {
+    var p = personById(j.person_id);
+    var action = j.status === 'review' && j.result_summary && j.result_summary.suggestion
+      ? '<button class="mini-btn" onclick="openResearchJob(\'' + esc(j.id) + '\')">Prüfen</button>'
+      : '<span class="pill pill-q">' + esc(j.status) + '</span>';
+    return '<div class="cost-row"><span><strong>' + esc(p ? p.name : (j.input_name || j.raw_input || 'Unbekannt')) + '</strong><br><span class="readonly-note">' + esc(j.mode || 'extract') + '</span></span>' + action + '</div>';
+  }).join('') + '</div>';
+}
+
+function openResearchJob(id) {
+  var job = researchJobs.find(function(j){ return String(j.id) === String(id); });
+  var suggestion = job && job.result_summary && job.result_summary.suggestion;
+  if (!job || !suggestion) return;
+  var person = personById(job.person_id) || findPersonByName(job.input_name);
+  if (!person) return;
+  addState = {
+    phase:'preview', person:mergePersonSuggestion(person, normalizePersonSuggestion(suggestion.person || {})),
+    entries:normalizeExtractEntries(suggestion.entries), prefill:job.input_name || person.name, job:job,
+    usage:job.result_summary.meta && job.result_summary.meta.usage,
+    grounding:job.result_summary.meta && job.result_summary.meta.grounding,
+    mode:'capture'
+  };
+  goTab('add');
+}
+
+var queueResumeBusy = false;
+function resumeQueuedResearch() {
+  if (queueResumeBusy || tableAvailability.research_jobs !== true) return;
+  var now = Date.now();
+  var job = researchJobs.find(function(j) {
+    if (j.mode !== 'extract') return false;
+    if (j.status === 'queued') return true;
+    return j.status === 'running' && now - new Date(j.updated_at || j.created_at || 0).getTime() > 120000;
+  });
+  if (!job) return;
+  var person = personById(job.person_id) || findPersonByName(job.input_name);
+  if (!person) return;
+  queueResumeBusy = true;
+  claimResearchJob(job)
+    .then(function(saved) {
+      if (!saved) { var err = new Error('Job wurde bereits übernommen'); err.code = 'JOB_ALREADY_CLAIMED'; throw err; }
+      Object.assign(job, saved);
+      return fetch('/api/extract', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ input:job.input_name, context:job.context || '' }) });
+    })
+    .then(function(r) { return r.json().then(function(data) {
+      if (data._meta && data._meta.usage) persistAiUsage(data._meta.usage, job, person, r.ok ? 'succeeded' : 'failed', data.error);
+      if (!r.ok || data.error) throw new Error(data.error || 'Recherche fehlgeschlagen');
+      return data;
+    }); })
+    .then(function(data) {
+      return patchSupa('research_jobs', job, {
+        status:'review', current_step:'review',
+        result_summary:{ entries:(data.entries || []).length, person_name:(data.person || {}).name || person.name, suggestion:{person:data.person, entries:data.entries}, meta:data._meta || {} }
+      }).then(function(saved){ Object.assign(job, saved || {}); });
+    })
+    .catch(function(err) {
+      if (err.code === 'JOB_ALREADY_CLAIMED') { job.status = 'running'; job.updated_at = new Date().toISOString(); }
+      else patchSupa('research_jobs', job, { status:'failed', current_step:'research', last_error:String(err.message || err), finished_at:new Date().toISOString() }).then(function(saved){ Object.assign(job, saved || {}); }).catch(function(){});
+    })
+    .finally(function() { queueResumeBusy = false; if (view === 'status') render(); setTimeout(resumeQueuedResearch, 50); });
+}
+
+function aiRunsHtml() {
+  if (!aiRuns.length) return '<div class="readonly-note">Noch keine KI-Läufe protokolliert.</div>';
+  return aiRuns.slice(-8).reverse().map(function(x) {
+    return '<div class="cost-row"><span><strong>' + esc(x.operation || 'KI-Lauf') + '</strong><br><span class="readonly-note">' + esc(x.model || '') + ' · ' + Number(x.total_tokens || 0).toLocaleString('de-DE') + ' Token</span></span><span>' + formatEuro(x.estimated_cost_eur || 0) + '</span></div>';
+  }).join('');
+}
+
+function dashMetric(n, l) {
+  return '<div class="metric"><div class="metric-n">' + n + '</div><div class="metric-l">' + esc(l) + '</div></div>';
+}
+
+function pipeRow(labelText, n, total) {
+  var pct = total ? Math.round((n / total) * 100) : 0;
+  return '<div class="pipe-row">' +
+    '<div class="pipe-label">' + esc(labelText) + '</div>' +
+    '<div class="pipe-bar"><div class="pipe-fill" style="width:' + pct + '%"></div></div>' +
+    '<div class="pipe-n">' + n + '/' + total + '</div>' +
+  '</div>';
+}
+
+function queueList(items, showEnhance) {
+  if (!items.length) return '<div class="readonly-note">Keine akute Baustelle in dieser Ansicht.</div>';
+  return '<div class="queue-list">' + items.map(function(m) {
+    var gaps = m.gaps.length ? m.gaps.join(', ') : 'gut vorbereitet';
+    return '<div class="queue-row">' +
+      '<div>' +
+        '<div class="queue-name" data-open-person="' + esc(m.person.name) + '">' + esc(m.person.name) + '</div>' +
+        '<div class="queue-meta">' + m.counts.total + ' Einträge · ' + m.counts.A + ' Anekdoten · ' + m.counts.Z + ' Zitate · fehlt: ' + esc(gaps) + '</div>' +
+        '<div class="dossier-row"><span class="pill ' + (m.dossier && m.dossier.count >= 6 ? 'pill-s' : 'pill-q') + '">Dossier ' + (m.dossier ? m.dossier.count : dossierModel(m.person).count) + '/8</span>' + (m.fit !== null && m.fit !== undefined ? '<span class="pill pill-s">Pilot ' + m.fit + '/12</span>' : '') + '</div>' +
+      '</div>' +
+      '<div class="actions">' +
+        (showEnhance ? '<button class="mini-btn primary" data-enhance-person="' + esc(m.person.name) + '">Enhance</button>' : '') +
+        '<button class="mini-btn" data-open-person="' + esc(m.person.name) + '">Öffnen</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function personDashboardModel(p) {
+  var pe = personEntries(p);
+  var c = { A:0, Z:0, F:0, S:0, total:pe.length, direct:0, strong:0, unchecked:0, notes:0 };
+  pe.forEach(function(x) {
+    if (x.kategorie === 'Anekdote') c.A++;
+    else if (x.kategorie === 'Zitat') c.Z++;
+    else if (x.kategorie === 'Fakt') c.F++;
+    else if (x.kategorie === 'Stil') c.S++;
+    if (x.buch === 'direkt') c.direct++;
+    if (strength(x) >= 4) c.strong++;
+    if (entryUnchecked(x)) c.unchecked++;
+    if (hasText(x.buchnotiz)) c.notes++;
+  });
+  var r = personReadiness(p);
+  var gaps = [];
+  if (!r.hasThesis) gaps.push('These');
+  if (!r.hasPrinciple) gaps.push('Prinzip');
+  if (!r.hasStrong) gaps.push('Stärke');
+  if (!r.hasFormat) gaps.push('Format');
+  if (!r.sourceOk) gaps.push('Quelle');
+  return {
+    person: p,
+    counts: c,
+    readiness: r,
+    gaps: gaps
+  };
+}
+
+function bindDashboardActions(root) {
+  root.querySelectorAll('[data-open-person]').forEach(function(el) {
+    el.onclick = function(e) {
+      e.stopPropagation();
+      showProfileByName(el.getAttribute('data-open-person'));
+    };
+  });
+  root.querySelectorAll('[data-enhance-person]').forEach(function(el) {
+    el.onclick = function(e) {
+      e.stopPropagation();
+      var p = findPersonByName(el.getAttribute('data-enhance-person'));
+      if (!p) return;
+      showProfile(p);
+      setTimeout(startEnhance, 0);
+    };
+  });
+}
+
+function collectTagStats() {
+  var map = {};
+  function add(tag, personName) {
+    tag = String(tag || '').trim();
+    if (!tag) return;
+    var key = normText(tag);
+    if (!map[key]) map[key] = { tag: tag, count: 0, people: {}, theme: themeForTag(tag) };
+    map[key].count++;
+    if (personName) map[key].people[personName] = true;
+  }
+  persons.forEach(function(p) { arr(p.tags).forEach(function(t) { add(t, p.name); }); });
+  entries.forEach(function(x) { arr(x.tags).forEach(function(t) { add(t, x.person); }); });
+  return Object.keys(map).map(function(k) {
+    var x = map[k];
+    x.peopleCount = Object.keys(x.people).length;
+    return x;
+  }).sort(function(a, b) { return (b.count - a.count) || a.tag.localeCompare(b.tag); });
+}
+
+function tagMappingHtml(stats) {
+  var mapped = stats.filter(function(x){ return x.theme; }).slice(0, 18);
+  var unmapped = stats.filter(function(x){ return !x.theme; }).slice(0, 12);
+  var html = '<div class="tag-cloud">';
+  mapped.forEach(function(x) {
+    html += '<span class="tag-map"><strong>' + esc(x.tag) + '</strong> → ' + esc(label(x.theme)) + ' · ' + x.count + '</span>';
+  });
+  html += '</div>';
+  if (unmapped.length) {
+    html += '<div class="dash-card-note" style="margin:14px 0 8px">Noch ohne Motiv-Zuordnung</div><div class="tag-cloud">';
+    unmapped.forEach(function(x) {
+      html += '<span class="tag-map unmapped"><strong>' + esc(x.tag) + '</strong> · ' + x.count + '</span>';
+    });
+    html += '</div>';
+  }
+  return html;
+}
+
+function themeForTag(tag) {
+  var n = normText(tag);
+  var themes = Object.keys(TAG_THEME_RULES);
+  for (var i = 0; i < themes.length; i++) {
+    var th = themes[i];
+    var rules = TAG_THEME_RULES[th] || [];
+    for (var j = 0; j < rules.length; j++) {
+      var r = normText(rules[j]);
+      if (n.indexOf(r) >= 0 || r.indexOf(n) >= 0) return th;
+    }
+  }
+  return null;
+}
+
+function profileTagThemes(p) {
+  var found = {};
+  arr(p.tags).forEach(function(t) {
+    var th = themeForTag(t);
+    if (th) found[th] = true;
+  });
+  personEntries(p).forEach(function(x) {
+    arr(x.tags).forEach(function(t) {
+      var th = themeForTag(t);
+      if (th) found[th] = true;
+    });
+  });
+  return THEMA_LIST.filter(function(t) { return found[t]; });
+}
+
+// ── THEMEN HEATMAP ───────────────────────────────
+function themenHeatmapHtml() {
+  var counts = {};
+  THEMA_LIST.forEach(function(t) { counts[t] = { entries: 0, people: {} }; });
+  entries.forEach(function(x) {
+    arr(x.themen).forEach(function(t) {
+      if (counts[t]) {
+        counts[t].entries++;
+        if (x.person) counts[t].people[x.person] = true;
+      }
+    });
+  });
+  var maxN = Math.max(1, Math.max.apply(null, THEMA_LIST.map(function(t) { return counts[t].entries; })));
+  var sorted = THEMA_LIST.slice().sort(function(a, b) { return counts[b].entries - counts[a].entries; });
+
+  var html = '<div class="heat-grid">';
+  sorted.forEach(function(t) {
+    var c = counts[t];
+    var pct = Math.round((c.entries / maxN) * 100);
+    var fillCls = c.entries === 0 ? 'pipe-fill-zero' : c.entries >= Math.ceil(maxN * .5) ? 'pipe-fill-strong' : 'pipe-fill-ok';
+    var pCount = Object.keys(c.people).length;
+    html += '<div class="pipe-row">' +
+      '<div class="pipe-label">' + esc(label(t)) + '</div>' +
+      '<div class="pipe-bar"><div class="' + fillCls + '" style="width:' + (c.entries ? Math.max(pct, 4) : 0) + '%"></div></div>' +
+      '<div class="pipe-n">' + c.entries + (pCount ? '<span style="color:var(--br2)"> / ' + pCount + 'P</span>' : '') + '</div>' +
+    '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// ── ZEITSTRAHL ───────────────────────────────────
+function parseFirstYear(dates) {
+  if (!dates) return null;
+  var s = String(dates);
+  var m = s.match(/(\d{3,4})/);
+  if (!m) return null;
+  var y = parseInt(m[1], 10);
+  var low = s.toLowerCase();
+  if (low.indexOf('v.chr') >= 0 || low.indexOf(' v.') >= 0 || low.indexOf('bc') >= 0 || low.indexOf('b.c') >= 0) y = -y;
+  return y;
+}
+function eraForYear(y) {
+  if (y === null) return 'Unbekannt';
+  if (y < 500)  return 'Antike';
+  if (y < 1400) return 'Mittelalter';
+  if (y < 1700) return 'Frühe Neuzeit';
+  if (y < 1900) return '18./19. Jh.';
+  if (y < 2000) return '20. Jh.';
+  return 'Gegenwart';
+}
+function zeitstrahlHtml() {
+  var ERA_ORDER = ['Antike', 'Mittelalter', 'Frühe Neuzeit', '18./19. Jh.', '20. Jh.', 'Gegenwart', 'Unbekannt'];
+  var counts = {};
+  ERA_ORDER.forEach(function(e) { counts[e] = []; });
+  persons.forEach(function(p) {
+    var era = eraForYear(parseFirstYear(p.dates));
+    counts[era].push(p.name);
+  });
+  var maxN = Math.max(1, Math.max.apply(null, ERA_ORDER.map(function(e) { return counts[e].length; })));
+
+  var html = '';
+  ERA_ORDER.forEach(function(era) {
+    var list = counts[era];
+    if (era === 'Unbekannt' && !list.length) return;
+    var pct = Math.round((list.length / maxN) * 100);
+    var fillCls = list.length === 0 ? 'pipe-fill-zero' : list.length >= Math.ceil(maxN * .5) ? 'pipe-fill-strong' : 'pipe-fill-ok';
+    html += '<div class="pipe-row">' +
+      '<div class="pipe-label">' + esc(era) + '</div>' +
+      '<div class="pipe-bar"><div class="' + fillCls + '" style="width:' + (list.length ? Math.max(pct, 4) : 0) + '%"></div></div>' +
+      '<div class="pipe-n" title="' + esc(list.join(', ')) + '">' + list.length + '</div>' +
+    '</div>';
+  });
+  return html;
+}
+
+function normText(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/ß/g, 'ss')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function svCell(n, required) {
+  var cls = n > 0 ? 'sv-has' : (required ? 'sv-warn' : 'sv-miss');
+  return '<td class="sv-cell"><span class="sv-n ' + cls + '">' + (n > 0 ? n : '—') + '</span></td>';
+}
+function svMark(ok, required) {
+  var cls = ok ? 'sv-has' : (required ? 'sv-warn' : 'sv-miss');
+  return '<td class="sv-cell"><span class="sv-n ' + cls + '">' + (ok ? '✓' : '—') + '</span></td>';
+}
+
+// ── ADD TAB STATE ────────────────────────────────
+var addState = { phase: 'input', person: null, entries: [], prefill: '', job: null, usage: null, mode: 'capture' };
+var captureBusy = false;
+
+// ── ADD TAB RENDER ───────────────────────────────
+function rAdd(main) {
+  main.innerHTML = '';
+  var wrap = document.createElement('div'); wrap.className = 'add-wrap';
+  main.appendChild(wrap);
+
+  if (addState.phase === 'loading') {
+    wrap.innerHTML =
+      '<div class="add-loading">' +
+        '<div class="add-loading-ico">◌</div>' +
+        '<div class="add-loading-txt"><strong>' + esc(addState.prefill || 'Der Name') + '</strong> ist bereits im Pool.<br>Die Recherche läuft jetzt…</div>' +
+      '</div>';
+    return;
+  }
+
+  if (addState.phase === 'preview') {
+    rAddPreview(wrap); return;
+  }
+
+  // Input phase
+  var card = document.createElement('div'); card.className = 'add-card';
+  card.innerHTML =
+    '<div class="pilot-kicker">Quick Capture</div>' +
+    '<h1 class="dash-title" style="margin-bottom:8px">Ein Name reicht.</h1>' +
+    '<p class="add-intro">Der Name wird sofort im Personenpool gesichert. Du kannst ihn nur merken oder direkt einen Recherchelauf starten.</p>' +
+    '<div class="add-fld">' +
+      '<label class="add-lbl" for="add-input">Name</label>' +
+      '<input id="add-input" class="ai capture-input" autocomplete="off" inputmode="text" ' +
+        'placeholder="z.B. Patti Smith" value="' + esc(addState.prefill || '') + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();captureName(true)}">' +
+    '</div>' +
+    '<div class="add-fld">' +
+      '<label class="add-lbl">Warum interessant? <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--t3)">(optional)</span></label>' +
+      '<textarea id="add-context" class="ai ai-ta" rows="2" ' +
+        'placeholder="z.B. &quot;Interessiert mich wegen Morgenroutinen und Disziplin&quot; oder &quot;Fokus auf Scheitern und Neuanfang&quot;"></textarea>' +
+    '</div>' +
+    '<div class="actions"><button class="add-btn" onclick="captureName(true)">Merken &amp; recherchieren</button><button class="add-btn-sec" onclick="captureName(false)">Nur merken</button></div>' +
+    '<div class="readonly-note" style="margin-top:12px">Mobiler Direktlink: <a class="subtle-link" href="?capture=1">/?capture=1</a>. Messenger kann später denselben Job-Workflow verwenden.</div>';
+  wrap.appendChild(card);
+  setTimeout(function(){ var input = document.getElementById('add-input'); if (input) input.focus(); }, 0);
+}
+
+function rAddPreview(wrap) {
+  var p = addState.person;
+  var existingPerson = findPersonByName(p.name || '');
+  var personExists = !!existingPerson;
+
+  var html = '';
+
+  if (addState.usage) {
+    var groundedSources = addState.grounding && addState.grounding.sources ? addState.grounding.sources.length : 0;
+    html += '<div class="add-notice">Recherche abgeschlossen · ' + Number(addState.usage.totalTokens || 0).toLocaleString('de-DE') + ' Token · ca. ' + formatEuro(addState.usage.estimatedCostEur || 0) + (groundedSources ? ' · Google Search: ' + groundedSources + ' Quellen' : ' · keine Webquellen geliefert') + '</div>';
+  }
+
+  if (personExists) {
+    html += '<div class="add-notice">Person <strong>' + esc(p.name) + '</strong> existiert bereits — vorhandene Felder bleiben sichtbar, leere Felder können mit den Vorschlägen ergänzt werden.</div>';
+  }
+
+  // Person section
+  html += '<div class="add-sec-hd">Person</div>';
+  html += '<div class="add-card">';
+  html += '<div class="add-row">';
+  html +=   '<div class="add-fld" style="flex:2"><label class="add-lbl">Name</label><input id="add-p-name" class="ai" value="' + esc(p.name || '') + '"' + (personExists ? ' readonly' : '') + '></div>';
+  html +=   '<div class="add-fld"><label class="add-lbl">Status</label><select id="add-p-status" class="ai ai-sel">';
+  ['kandidat','aktiv','bereit'].forEach(function(s) {
+    html += '<option value="' + s + '"' + ((p.status || 'kandidat') === s ? ' selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>';
+  });
+  html +=   '</select></div>';
+  html += '</div>';
+  html += '<div class="add-row">';
+  html +=   '<div class="add-fld"><label class="add-lbl">Kategorie</label><input id="add-p-kat" class="ai" value="' + esc(p.kategorie || '') + '" placeholder="z.B. Philosoph"></div>';
+  html +=   '<div class="add-fld"><label class="add-lbl">Daten</label><input id="add-p-dates" class="ai" value="' + esc(p.dates || '') + '" placeholder="z.B. 121–180 n.Chr."></div>';
+  html += '</div>';
+  html += '<div class="add-fld"><label class="add-lbl">Tags (kommagetrennt)</label><input id="add-p-tags" class="ai" value="' + esc((p.tags || []).join(', ')) + '"></div>';
+  html += '<div class="add-fld"><label class="add-lbl">Biografie</label><textarea id="add-p-note" class="ai ai-ta" rows="4">' + esc(p.note || '') + '</textarea></div>';
+  html += '<div class="form-grid">';
+  html +=   '<div class="add-fld"><label class="add-lbl">Lebensprinzip</label><textarea id="add-p-principle" class="ai ai-ta" rows="3">' + esc(p.lebensprinzip || '') + '</textarea></div>';
+  html +=   '<div class="add-fld"><label class="add-lbl">Buchthese</label><textarea id="add-p-thesis" class="ai ai-ta" rows="3">' + esc(p.buchthese || '') + '</textarea></div>';
+  html +=   '<div class="add-fld"><label class="add-lbl">Archetyp</label><input id="add-p-arch" class="ai" value="' + esc(p.archetyp || '') + '"></div>';
+  html +=   '<div class="add-fld"><label class="add-lbl">Visuelles Motiv</label><input id="add-p-visual" class="ai" value="' + esc(p.visuelles_motiv || '') + '"></div>';
+  html += '</div>';
+  html += '<div class="add-fld"><label class="add-lbl">Spannung / Widerspruch</label><textarea id="add-p-tension" class="ai ai-ta" rows="3">' + esc(p.spannung || '') + '</textarea></div>';
+  html += '<div class="add-fld"><label class="add-lbl">Format-Eignung</label>' + checkGroup('add-p-format', FORMAT_EIGNUNG, arr(p.format_eignung)) + '</div>';
+  html += '<div class="add-fld"><label class="add-lbl">Kurationsnotiz</label><textarea id="add-p-cur-note" class="ai ai-ta" rows="2">' + esc(p.kurationsnotiz || '') + '</textarea></div>';
+  html += '</div>';
+
+  // Entries section
+  html += '<div class="add-sec-hd">Einträge (' + addState.entries.length + ')</div>';
+
+  addState.entries.forEach(function(e, i) {
+    var kat = e.kategorie || 'Anekdote';
+    var ciCls = KAT_CI[kat] || 'ci-x';
+    var icon  = KAT_ICON[kat] || '·';
+    var mainText = e.text || e.anekdote || e.quote || e.fakt || '';
+    var mainLabel = kat === 'Zitat' ? 'Zitat' : kat === 'Fakt' ? 'Fakt' : kat === 'Stil' ? 'Stilbeobachtung' : 'Anekdote';
+
+    html += '<div class="add-card">';
+    html += '<div class="add-entry-top">';
+    html +=   '<div class="ci ' + ciCls + '" style="width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">' + icon + '</div>';
+    html +=   '<select id="add-e-' + i + '-kat" class="ai ai-sel" onchange="changeEntryKat(' + i + ')" style="width:auto">';
+    ['Anekdote','Zitat','Fakt','Stil'].forEach(function(k) {
+      html += '<option value="' + k + '"' + (kat === k ? ' selected' : '') + '>' + k + '</option>';
+    });
+    html +=   '</select>';
+    html +=   '<select id="add-e-' + i + '-buch" class="ai ai-sel" style="width:auto">';
+    html +=     '<option value="hintergrund"' + ((e.buch || 'hintergrund') === 'hintergrund' ? ' selected' : '') + '>Hintergrund</option>';
+    html +=     '<option value="direkt"' + (e.buch === 'direkt' ? ' selected' : '') + '>Direkt</option>';
+    html +=   '</select>';
+    html +=   '<button class="add-btn-rm" onclick="removeEntry(' + i + ')">× Entfernen</button>';
+    html += '</div>';
+    html += '<div class="add-fld"><label class="add-lbl">' + mainLabel + '</label><textarea id="add-e-' + i + '-text" class="ai ai-ta" rows="3">' + esc(mainText) + '</textarea></div>';
+    html += '<div class="add-row">';
+    html +=   '<div class="add-fld"><label class="add-lbl">Quelle</label><input id="add-e-' + i + '-quelle" class="ai" value="' + esc(e.quelle || '') + '" placeholder="optional"></div>';
+    html +=   '<div class="add-fld"><label class="add-lbl">Tags (kommagetrennt)</label><input id="add-e-' + i + '-tags" class="ai" value="' + esc((e.tags || []).join(', ')) + '"></div>';
+    html += '</div>';
+    html += '<div class="add-row">';
+    html +=   '<div class="add-fld"><label class="add-lbl">Quelle URL</label><input id="add-e-' + i + '-quelle-url" class="ai" value="' + esc(e.quelle_url || '') + '" placeholder="https://…"></div>';
+    html +=   '<div class="add-fld"><label class="add-lbl">Ton</label><input id="add-e-' + i + '-ton" class="ai" value="' + esc(e.ton || '') + '" placeholder="z.B. ruhig, radikal, elegant"></div>';
+    html += '</div>';
+    html += '<div class="form-grid three">';
+    html +=   '<div class="add-fld"><label class="add-lbl">Stärke</label><select id="add-e-' + i + '-staerke" class="ai ai-sel">' + opts(['','1','2','3','4','5'], String(e.staerke || '')) + '</select></div>';
+    html +=   '<div class="add-fld"><label class="add-lbl">Quellenqualität</label><select id="add-e-' + i + '-qqual" class="ai ai-sel">' + opts(QUELLENQUALITAET, e.quellenqualitaet || 'unbekannt') + '</select></div>';
+    html +=   '<div class="add-fld"><label class="add-lbl">Buchreife</label><select id="add-e-' + i + '-reife" class="ai ai-sel">' + opts(BUCHREIFE, e.buchreife || 'roh') + '</select></div>';
+    html += '</div>';
+    html += '<div class="add-fld"><label class="add-lbl">Seitenrolle</label><select id="add-e-' + i + '-rolle" class="ai ai-sel">' + opts(SEITENROLLE, e.seitenrolle || 'unentschieden') + '</select></div>';
+    html += '<div class="add-fld"><label class="add-lbl">Themen</label>' + checkGroup('add-e-' + i + '-themen', THEMA_LIST, arr(e.themen)) + '</div>';
+    html += '<div class="add-fld"><label class="add-lbl">Buchnotiz</label><textarea id="add-e-' + i + '-buchnotiz" class="ai ai-ta" rows="2">' + esc(e.buchnotiz || '') + '</textarea></div>';
+    html += '</div>';
+  });
+
+  html += '<button class="add-btn-sec" onclick="addEntry()" style="margin-top:4px">+ Eintrag hinzufügen</button>';
+
+  // Footer
+  html += '<div class="add-footer">';
+  html +=   '<button id="add-save-btn" class="add-btn" onclick="saveData()">Speichern</button>';
+  html +=   '<button class="add-btn-sec" onclick="resetAdd()">Zurücksetzen</button>';
+  html += '</div>';
+
+  wrap.innerHTML = html;
+}
+
+// ── ADD TAB ACTIONS ──────────────────────────────
+function analyzeInput() { captureName(true); }
+
+function captureName(runResearch) {
+  if (captureBusy) return;
+  var input = document.getElementById('add-input');
+  var name = String(input ? input.value : '').replace(/\s+/g, ' ').trim();
+  var ctx = String((document.getElementById('add-context') || {}).value || '').trim();
+  if (!name) { if (input) input.focus(); return; }
+  captureBusy = true;
+  document.querySelectorAll('.add-card button').forEach(function(b) { b.disabled = true; });
+  var existingPerson = findPersonByName(name);
+  var personPromise = existingPerson ? Promise.resolve(existingPerson) : insertSupa('persons', personPayload({ name:name, status:'kandidat' }, true));
+
+  personPromise.then(function(person) {
+    if (!existingPerson) persons.push(person);
+    addState.person = person;
+    addState.prefill = name;
+    updateStats();
+    if (tableAvailability.research_jobs === false) return person;
+    var activeJob = researchJobs.find(function(j) {
+      return String(j.input_name || '').toLowerCase().trim() === name.toLowerCase() && ['captured','queued','running','review'].indexOf(j.status) >= 0;
+    });
+    var jobPayload = { input_name:name, source:'web_quick', mode:runResearch ? 'extract' : 'remember', status:runResearch ? 'queued' : 'captured', current_step:'intake', context:ctx || null };
+    return (activeJob ? patchSupa('research_jobs', activeJob, { mode:jobPayload.mode, status:jobPayload.status, context:jobPayload.context }) : insertSupa('research_jobs', jobPayload))
+      .then(function(job) {
+        job = job || activeJob;
+        if (!activeJob) researchJobs.push(job);
+        addState.job = job;
+        return patchSupa('research_jobs', job, { person_id:person.id }).then(function(saved) {
+          Object.assign(job, saved || { person_id:person.id });
+          return person;
+        });
+      });
+  }).then(function(person) {
+    if (!runResearch) {
+      showProfile(person);
+      return;
+    }
+    addState.phase = 'loading';
+    render();
+    return runNameResearch(name, ctx, person);
+  }).catch(function(err) {
+    showCaptureError(name, err, !!addState.person);
+  }).finally(function() {
+    captureBusy = false;
+  });
+}
+
+function runNameResearch(name, ctx, resolvedPerson) {
+  var job = addState.job;
+  var claim = job ? claimResearchJob(job).then(function(saved) {
+    if (!saved) { job.status = 'running'; job.updated_at = new Date().toISOString(); var err = new Error('Dieser Recherchejob läuft bereits in einem anderen Fenster.'); err.code = 'JOB_ALREADY_CLAIMED'; throw err; }
+    Object.assign(job, saved);
+  }) : Promise.resolve();
+  return claim.then(function() { return fetch('/api/extract', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ input: name, context: ctx })
+  }); })
+  .then(function(r) {
+    return r.json().then(function(data) {
+      if (data._meta && data._meta.usage && !r.ok) persistAiUsage(data._meta.usage, job, resolvedPerson, 'failed', data.error);
+      if (!r.ok || data.error) throw new Error(data.error || 'Analyse fehlgeschlagen (HTTP ' + r.status + ')');
+      return data;
+    });
+  })
+  .then(function(data) {
+    addState.usage = data._meta && data._meta.usage ? data._meta.usage : null;
+    addState.grounding = data._meta && data._meta.grounding ? data._meta.grounding : null;
+    if (addState.usage) persistAiUsage(addState.usage, job, resolvedPerson);
+    var incomingPerson = normalizePersonSuggestion(data.person || {});
+    addState.person = mergePersonSuggestion(resolvedPerson, incomingPerson);
+    addState.entries = normalizeExtractEntries(data.entries);
+    if (job) {
+      patchSupa('research_jobs', job, { status:'review', current_step:'review', result_summary:{ entries:addState.entries.length, person_name:addState.person.name, suggestion:{ person:data.person, entries:data.entries }, meta:data._meta || {} } })
+        .then(function(saved){ Object.assign(job, saved || {}); }).catch(function(){});
+    }
+    addState.phase = 'preview';
+    render();
+  })
+  .catch(function(err) {
+    if (job && err.code !== 'JOB_ALREADY_CLAIMED') patchSupa('research_jobs', job, { status:'failed', current_step:'research', last_error:String(err.message || err), finished_at:new Date().toISOString() }).catch(function(){});
+    showCaptureError(name, err, true);
+  });
+}
+
+function normalizeExtractEntries(rawEntries) {
+  var KAT_NORM = { anekdote:'Anekdote', zitat:'Zitat', fakt:'Fakt', stil:'Stil' };
+  return (rawEntries || []).map(function(e) {
+    var kat = KAT_NORM[String(e.kategorie || '').trim().toLowerCase()] || 'Anekdote';
+    var text = kat === 'Zitat' ? (e.quote || e.anekdote || e.fakt || '') : kat === 'Fakt' ? (e.fakt || e.anekdote || e.quote || '') : (e.anekdote || e.quote || e.fakt || '');
+    if (!text) text = e.text || e.preview || '';
+    return {
+      kategorie:kat, buch:e.buch || 'hintergrund', text:text, quelle:e.quelle || '', quelle_url:e.quelle_url || '',
+      tags:Array.isArray(e.tags) ? e.tags : [], staerke:normalizeStrength(e.staerke),
+      quellenqualitaet:cleanChoice(e.quellenqualitaet, QUELLENQUALITAET, 'unbekannt'),
+      buchreife:cleanChoice(e.buchreife, BUCHREIFE, 'roh'),
+      themen:arr(e.themen).filter(function(t){ return THEMA_LIST.indexOf(t) >= 0; }), ton:e.ton || '',
+      seitenrolle:cleanChoice(e.seitenrolle, SEITENROLLE, 'unentschieden'), buchnotiz:e.buchnotiz || ''
+    };
+  });
+}
+
+function persistAiUsage(usage, job, person, status, errorMessage) {
+  var book = activeBook();
+  var payload = {
+    operation: usage.operation || 'extract', provider:'google', model:usage.model || 'gemini-2.5-flash', status:status || 'succeeded',
+    prompt_tokens:usage.promptTokens, output_tokens:usage.outputTokens, thinking_tokens:usage.thinkingTokens || 0,
+    total_tokens:usage.totalTokens, estimated_cost_usd:usage.estimatedCostUsd, estimated_cost_eur:usage.estimatedCostEur,
+    duration_ms:usage.durationMs, pricing:Object.assign({}, usage.pricing || {}, { groundingRequests:usage.groundingRequests || 0 }), research_job_id:job && job.id,
+    person_id:person && person.id, book_id:book && book.id, error_message:errorMessage || null
+  };
+  insertSupa('ai_runs', payload).then(function(saved) { if (saved) aiRuns.push(saved); updateStats(); }).catch(function(err) { console.warn('KI-Kosten konnten nicht gespeichert werden:', err.message); });
+}
+
+function showCaptureError(name, err, wasSaved) {
+  addState.phase = 'input'; addState.prefill = name;
+  render();
+  setTimeout(function() {
+    var w = document.querySelector('.add-wrap');
+    if (!w) return;
+    var errEl = document.createElement('div');
+    errEl.style.cssText = 'margin-top:12px;padding:11px 14px;background:#fdf0ee;border:1px solid #e0b0aa;border-radius:6px;font-size:12px;color:#8f2e22';
+    errEl.textContent = (wasSaved ? 'Name ist gespeichert. Recherche fehlgeschlagen: ' : 'Speichern fehlgeschlagen: ') + err.message;
+    w.querySelector('.add-card').appendChild(errEl);
+  }, 30);
+}
+
+function collectFormData() {
+  if (addState.phase !== 'preview') return;
+  var g = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+
+  addState.person = {
+    name: g('add-p-name'),
+    kategorie: g('add-p-kat'),
+    dates: g('add-p-dates'),
+    status: g('add-p-status'),
+    tags: splitList(g('add-p-tags')),
+    note: g('add-p-note'),
+    lebensprinzip: g('add-p-principle'),
+    buchthese: g('add-p-thesis'),
+    archetyp: g('add-p-arch'),
+    spannung: g('add-p-tension'),
+    visuelles_motiv: g('add-p-visual'),
+    format_eignung: getChecked('add-p-format'),
+    kurationsnotiz: g('add-p-cur-note')
+  };
+
+  addState.entries = addState.entries.map(function(e, i) {
+    return {
+      kategorie: g('add-e-' + i + '-kat'),
+      buch: g('add-e-' + i + '-buch'),
+      text: g('add-e-' + i + '-text'),
+      quelle: g('add-e-' + i + '-quelle'),
+      quelle_url: g('add-e-' + i + '-quelle-url'),
+      tags: splitList(g('add-e-' + i + '-tags')),
+      staerke: g('add-e-' + i + '-staerke'),
+      quellenqualitaet: g('add-e-' + i + '-qqual'),
+      buchreife: g('add-e-' + i + '-reife'),
+      themen: getChecked('add-e-' + i + '-themen'),
+      ton: g('add-e-' + i + '-ton'),
+      seitenrolle: g('add-e-' + i + '-rolle'),
+      buchnotiz: g('add-e-' + i + '-buchnotiz')
+    };
+  });
+}
+
+function changeEntryKat(i) {
+  collectFormData();
+  addState.entries[i].kategorie = document.getElementById('add-e-' + i + '-kat').value;
+  render();
+}
+
+function removeEntry(i) {
+  collectFormData();
+  addState.entries.splice(i, 1);
+  render();
+}
+
+function addEntry() {
+  collectFormData();
+  addState.entries.push({ kategorie: 'Anekdote', buch: 'hintergrund', text: '', quelle: '', quelle_url: '', tags: [], staerke: '', quellenqualitaet: 'unbekannt', buchreife: 'roh', themen: [], ton: '', seitenrolle: 'unentschieden', buchnotiz: '' });
+  render();
+}
+
+function resetAdd() {
+  addState = { phase: 'input', person: null, entries: [], prefill: '', job: null, usage: null, mode: 'capture' };
+  render();
+}
+
+function saveData() {
+  collectFormData();
+  var p = addState.person;
+  if (!p || !p.name || !p.name.trim()) { alert('Name darf nicht leer sein.'); return; }
+
+  var btn = document.getElementById('add-save-btn');
+  btn.disabled = true; btn.textContent = 'Speichert…';
+
+  var existingPerson = findPersonByName(p.name);
+
+  var personPromise = existingPerson
+    ? patchSupa('persons', existingPerson, personPayload(p, false)).then(function(saved) {
+        Object.assign(existingPerson, saved || p);
+        return existingPerson;
+      })
+    : insertSupa('persons', personPayload(p, true));
+
+  personPromise.then(function(r) {
+    var resolvedPerson = existingPerson || r || p;
+    var entryObjects = addState.entries.filter(function(e) { return e.text && e.text.trim(); }).map(function(e) {
+      e.person = resolvedPerson.name || p.name;
+      e.person_id = resolvedPerson.id || null;
+      return entryPayload(e);
+    });
+
+    if (!entryObjects.length) return Promise.resolve({ ok: true });
+
+    return insertSupa('entries', entryObjects);
+  }).then(function(r) {
+    if (addState.job) patchSupa('research_jobs', addState.job, { status:'done', current_step:'done', finished_at:new Date().toISOString() }).catch(function(){});
+    addState = { phase: 'input', person: null, entries: [], prefill: '', job: null, usage: null, mode: 'capture' };
+    init();
+  }).catch(function(err) {
+    btn.disabled = false; btn.textContent = 'Speichern';
+    alert('Fehler beim Speichern: ' + err.message);
+  });
+}
+
+init();
+</script>
+</body>
+</html>

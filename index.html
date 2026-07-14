@@ -60,8 +60,13 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .chip { font-size: 11px; padding: 4px 11px; border: 1px solid var(--br2); border-radius: 20px; background: transparent; cursor: pointer; color: var(--t2); transition: all .12s; white-space: nowrap; user-select: none }
 .chip:hover { border-color: #999; color: var(--tx) }
 .chip.on { background: var(--tx); color: var(--bg); border-color: var(--tx) }
-.csep { width: 1px; background: var(--br); align-self: stretch; margin: 0 4px; flex-shrink: 0 }
 .cnt { font-size: 12px; color: var(--t3); margin-left: auto; white-space: nowrap }
+
+/* ── CHIP GROUPS ── */
+#chips { display: flex; flex-direction: column; gap: 6px; flex: 1 1 100%; min-width: 0; margin-top: 6px }
+.chip-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0 }
+.chip-group-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--t3); font-weight: 700; white-space: nowrap }
+.chip-row { display: flex; gap: 5px; flex-wrap: wrap; min-width: 0 }
 
 /* ── MAIN ── */
 .main { max-width: 1140px; margin: 0 auto; padding: 1.5rem 2rem 5rem }
@@ -351,9 +356,12 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   .tab-more { display: none }
   .tab-add { margin-left: 0; color: #fff }
   .bar { top: 0; padding-top: 8px; padding-bottom: 8px }
-  .bar-in { flex-wrap: nowrap; overflow-x: auto }
-  .srch-wrap { min-width: 190px }
-  #chips { display: flex; gap: 5px; flex-wrap: nowrap }
+  .bar-in { flex-wrap: wrap; overflow-x: visible }
+  .srch-wrap { min-width: 0; flex: 1 1 100% }
+  #chips { flex: 1 1 100%; margin-top: 6px; gap: 8px }
+  .chip-group { flex-direction: column; align-items: flex-start; gap: 4px; width: 100% }
+  .chip-row { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 2px; scrollbar-width: none }
+  .chip-row::-webkit-scrollbar { display: none }
   .pgrid { grid-template-columns: 1fr }
   .pc { padding: 14px }
   .profile-name { font-size: 24px }
@@ -606,32 +614,32 @@ function showProfile(p) {
 function chips() {
   var el = document.getElementById('chips'); el.innerHTML = '';
   if (view === 'persons') {
-    mkGroup(el, 'status', ['Alle', 'aktiv', 'kandidat', 'bereit']);
-    cSep(el);
-    mkGroup(el, 'cur', ['Alle', 'fehlende_these', 'starke_personen', 'ungepruefte_quellen', 'formatbereit', 'buchreif']);
-    cSep(el);
-    mkGroup(el, 'format', ['Alle'].concat(FORMAT_EIGNUNG));
+    mkGroup(el, 'status', 'Status', ['Alle', 'aktiv', 'kandidat', 'bereit']);
+    mkGroup(el, 'cur', 'Material', ['Alle', 'fehlende_these', 'starke_personen', 'ungepruefte_quellen', 'formatbereit', 'buchreif']);
+    mkGroup(el, 'format', 'Format', ['Alle'].concat(FORMAT_EIGNUNG));
   }
   if (view === 'entries') {
-    mkGroup(el, 'kat', ['Alle', 'Anekdote', 'Zitat', 'Fakt', 'Stil']);
-    cSep(el);
-    mkGroup(el, 'buch', ['Alle', 'direkt', 'hintergrund']);
-    cSep(el);
-    mkGroup(el, 'curEntry', ['Alle', 'strong_entries', 'unchecked_entries', 'unlinked_entries']);
-    cSep(el);
-    mkGroup(el, 'reife', ['Alle'].concat(BUCHREIFE));
+    mkGroup(el, 'kat', 'Kategorie', ['Alle', 'Anekdote', 'Zitat', 'Fakt', 'Stil']);
+    mkGroup(el, 'buch', 'Buch-Status', ['Alle', 'direkt', 'hintergrund']);
+    mkGroup(el, 'curEntry', 'Qualität', ['Alle', 'strong_entries', 'unchecked_entries', 'unlinked_entries']);
+    mkGroup(el, 'reife', 'Buchreife', ['Alle'].concat(BUCHREIFE));
   }
 }
-function cSep(el) { var d = document.createElement('div'); d.className = 'csep'; el.appendChild(d); }
-function mkGroup(el, grp, vals) {
+function mkGroup(el, grp, label, vals) {
   var labels = { direkt: 'Direkt', hintergrund: 'Hintergrund', aktiv: 'Aktiv', kandidat: 'Kandidat', bereit: 'Bereit' };
+  var group = document.createElement('div'); group.className = 'chip-group';
+  var lbl = document.createElement('div'); lbl.className = 'chip-group-lbl'; lbl.textContent = label;
+  group.appendChild(lbl);
+  var row = document.createElement('div'); row.className = 'chip-row';
   vals.forEach(function(v) {
     var b = document.createElement('button'); b.className = 'chip';
     if ((!fil[grp] && v === 'Alle') || fil[grp] === v) b.className += ' on';
     b.textContent = labels[v] || LABEL[v] || v;
     b.onclick = function() { fil[grp] = v === 'Alle' ? null : v; chips(); render(); };
-    el.appendChild(b);
+    row.appendChild(b);
   });
+  group.appendChild(row);
+  el.appendChild(group);
 }
 
 // ── SEARCH ───────────────────────────────────────

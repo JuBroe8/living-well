@@ -1,5 +1,6 @@
 const { GoogleGenAI } = require('@google/genai');
 const { calculateUsage, recordUsage } = require('./ai-usage');
+const { generateWithTransientRetry, runGroundedResearch, mergeUsage } = require('./grounded-research');
 
 // The frequent name-to-dossier workflow uses the free-tier model with the
 // highest daily allowance.
@@ -204,64 +205,6 @@ function buildSourceExamplesBlock(examples) {
   return `\n\nBEISPIELE FÜR BEREITS GEPRÜFTE, GUTE QUELLENANGABEN IN UNSEREM BESTAND:\n${lines.join('\n')}\nRichte Recherche und Quellenformat an Art und Präzision dieser Beispiele aus — bevorzuge denselben Quellentyp (Primärwerke, seriöse Biographien, geprüfte Archive), nicht Social Media oder unbelegte Zusammenfassungen.`;
 }
 
-function groundingSummary(result) {
-  const metadata = result && result.candidates && result.candidates[0] && result.candidates[0].groundingMetadata;
-  if (!metadata) return { used: false, sources: [], queries: [] };
-  const sources = (metadata.groundingChunks || []).map((chunk) => chunk && chunk.web).filter(Boolean).map((web) => ({
-    title: web.title || '',
-    url: web.uri || ''
-  }));
-  return { used: sources.length > 0, sources, queries: metadata.webSearchQueries || [] };
-}
-
-function sumField(list, key) {
-  let total = 0;
-  for (const u of list) {
-    if (u[key] === null || u[key] === undefined) return null;
-    total += u[key];
-  }
-  return total;
-}
-
-// Combines the research-call and structuring-call usage into a single
-// ai_runs row so a grounded extract still shows up as one cost line, not two.
-function mergeUsage(usages) {
-  const valid = usages.filter(Boolean);
-  if (!valid.length) return null;
-  if (valid.length === 1) return valid[0];
-  return {
-    operation: 'extract',
-    model: valid[valid.length - 1].model,
-    promptTokens: sumField(valid, 'promptTokens'),
-    outputTokens: sumField(valid, 'outputTokens'),
-    thinkingTokens: sumField(valid, 'thinkingTokens'),
-    totalTokens: sumField(valid, 'totalTokens'),
-    groundingRequests: valid.reduce((acc, u) => acc + (u.groundingRequests || 0), 0),
-    estimatedCostUsd: sumField(valid, 'estimatedCostUsd'),
-    estimatedCostEur: sumField(valid, 'estimatedCostEur'),
-    durationMs: valid.reduce((acc, u) => acc + (u.durationMs || 0), 0),
-    pricing: valid[valid.length - 1].pricing
-  };
-}
-
-async function generateWithTransientRetry(ai, request) {
-  let lastErr;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      return await ai.models.generateContent(request);
-    } catch (err) {
-      lastErr = err;
-      const message = err && err.message ? err.message : '';
-      const transient = message.includes('503')
-        || message.includes('UNAVAILABLE')
-        || message.toLowerCase().includes('high demand');
-      if (!transient || attempt === 2) throw err;
-      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
-    }
-  }
-  throw lastErr;
-}
-
 module.exports = async function handler(req, res) {
   const requestStartedAt = Date.now();
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -308,27 +251,16 @@ module.exports = async function handler(req, res) {
 
       if (SEARCH_GROUNDING_ENABLED) {
         try {
-          const researchResult = await generateWithTransientRetry(ai, {
-            model: MODEL,
-            contents: enrichedInput,
-            config: { systemInstruction: RESEARCH_PROMPT, tools: [{ googleSearch: {} }], temperature: 0.3 }
+          const research = await runGroundedResearch({
+            ai, model: MODEL, systemInstruction: RESEARCH_PROMPT, contents: enrichedInput,
+            requestStartedAt, operation: 'extract_research'
           });
-          grounding = groundingSummary(researchResult);
-          usages.push(calculateUsage({
-            usageMetadata: researchResult.usageMetadata,
-            model: MODEL,
-            operation: 'extract_research',
-            durationMs: Date.now() - requestStartedAt,
-            groundingRequestCount: grounding.used ? Math.max(1, grounding.queries.length) : 0
-          }));
-          const sourceList = grounding.sources
-            .filter((s) => s.url)
-            .map((s, i) => `${i + 1}. ${s.title || s.url} — ${s.url}`)
-            .join('\n');
+          grounding = research.grounding;
+          usages.push(research.usage);
           structuringInput = enrichedInput
-            + `\n\n--- RECHERCHE-ERGEBNISSE (per Google-Suche gefunden) ---\n${researchResult.text || ''}`
-            + (sourceList
-              ? `\n\n--- ECHTE, DURCH SUCHE BESTÄTIGTE QUELLEN-URLS (für quelle_url ausschließlich diese verwenden, keine neuen erfinden) ---\n${sourceList}`
+            + `\n\n--- RECHERCHE-ERGEBNISSE (per Google-Suche gefunden) ---\n${research.findingsText}`
+            + (research.sourceListText
+              ? `\n\n--- ECHTE, DURCH SUCHE BESTÄTIGTE QUELLEN-URLS (für quelle_url ausschließlich diese verwenden, keine neuen erfinden) ---\n${research.sourceListText}`
               : '');
         } catch (researchErr) {
           console.warn('Grounded research step failed, falling back to ungrounded structuring:', researchErr.message);
@@ -388,4 +320,3 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports.buildSourceExamplesBlock = buildSourceExamplesBlock;
-module.exports.mergeUsage = mergeUsage;

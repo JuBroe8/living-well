@@ -972,6 +972,43 @@ function cancelEnhance() {
   render();
 }
 
+// Targeted "find N new entries of this category" — routes through the same
+// review/save screen as a fresh name research, just scoped to one person +
+// one category instead of a whole new dossier.
+function startExpand(kategorie, count) {
+  var p = profilePerson;
+  if (!p) return;
+  addState = { phase: 'loading', person: p, entries: [], prefill: p.name, job: null, usage: null, grounding: null, mode: 'expand' };
+  goTab('add');
+
+  fetch('/api/enhance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ person: p, entries: personEntries(p).map(entryForEnhance), mode: 'expand', kategorie: kategorie, count: count || 2 })
+  })
+  .then(function(r) {
+    return r.json().then(function(data) {
+      if (data._meta && data._meta.usage) persistAiUsage(data._meta.usage, null, p, r.ok ? 'succeeded' : 'failed', data.error);
+      if (!r.ok || data.error) throw new Error(data.error || 'Erweitern fehlgeschlagen');
+      return data;
+    });
+  })
+  .then(function(data) {
+    addState = {
+      phase: 'preview', person: p,
+      entries: normalizeExtractEntries(data.entries),
+      prefill: p.name, job: null,
+      usage: data._meta && data._meta.usage,
+      grounding: data._meta && data._meta.grounding,
+      mode: 'expand'
+    };
+    render();
+  })
+  .catch(function(err) {
+    showCaptureError(p.name, err, true);
+  });
+}
+
 function entryForEnhance(x) {
   return {
     id: x.id,
@@ -1136,6 +1173,14 @@ function enhanceFilterBar(p, pEntries) {
   }
 
   html += '</div>';
+
+  html += '<div class="enhance-filter-bar">' +
+    '<span class="enhance-filter-lbl">Erweitern</span>' +
+    KAT_ORDER.map(function(k) {
+      return '<button class="mini-btn" onclick="startExpand(\'' + k + '\',2)">+2 ' + KAT_ICON[k] + ' ' + esc(k) + '</button>';
+    }).join('') +
+  '</div>';
+
   return html;
 }
 

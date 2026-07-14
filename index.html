@@ -1103,7 +1103,7 @@ function renderEnhancePanel(p) {
   var personSug = data.person || {};
   var html =
     '<div class="enhance-hd">' +
-      '<div><div class="enhance-title">Vorschläge prüfen</div><div class="enhance-sub">Häkchen bedeutet: beim Speichern übernehmen. Leere Felder sind vorausgewählt, bestehende Inhalte bleiben erst einmal geschützt.</div></div>' +
+      '<div><div class="enhance-title">Vorschläge prüfen</div><div class="enhance-sub">Häkchen bedeutet: beim Speichern übernehmen. Leere Felder sind vorausgewählt, bestehende Inhalte bleiben erst einmal geschützt. Tags/Themen werden ergänzt, nicht ersetzt; bei Text wird der Vorschlag angehängt — beides direkt im Feld editierbar.</div></div>' +
       '<button class="mini-btn" onclick="cancelEnhance()">Schließen</button>' +
     '</div>';
 
@@ -1224,7 +1224,7 @@ function reviewRow(scope, f, current, suggestion) {
     '<div class="review-label">' + esc(f.label) + '</div>' +
     '<div>' +
       '<div class="review-current">Aktuell: ' + esc(displayValue(current, f.type) || '—') + '</div>' +
-      inputForSuggestion(id, f, suggestion, !has) +
+      inputForSuggestion(id, f, suggestion, !has, current) +
     '</div>' +
   '</div>';
 }
@@ -1247,16 +1247,33 @@ function entryReviewBlock(entry, sug, i) {
     html += '<div class="review-field">' +
       '<label><input type="checkbox" id="' + id + '-use"' + checked + '> ' + esc(f.label) + '</label>' +
       '<div class="review-current">Aktuell: ' + esc(displayValue(current, f.type) || '—') + '</div>' +
-      inputForSuggestion(id, f, suggestion, false) +
+      inputForSuggestion(id, f, suggestion, false, current) +
     '</div>';
   });
   html += '</div></div>';
   return html;
 }
 
-function inputForSuggestion(id, f, value, disabled) {
+// current (the field's existing value) is optional — passed by callers that
+// have it in scope. For list fields the box is pre-filled with the merged
+// (existing ∪ suggested) set, since that's what actually gets saved — the
+// box is the source of truth, not a silent extra merge at save time. For
+// prose fields, existing text is kept and the suggestion appended below a
+// separator rather than replaced outright, so nothing is lost by default;
+// the field stays fully editable if the user wants to trim either part.
+function inputForSuggestion(id, f, value, disabled, current) {
   var dis = disabled ? ' disabled' : '';
-  if (f.type === 'textarea') return '<textarea id="' + id + '" class="ai ai-ta" rows="3"' + dis + '>' + esc(value || '') + '</textarea>';
+  if (f.type === 'array') {
+    var merged = current ? unique(arr(current).concat(arr(value))) : arr(value);
+    return '<input id="' + id + '" class="ai" value="' + esc(displayValue(merged, f.type)) + '"' + dis + '>';
+  }
+  if (f.type === 'textarea') {
+    var prefill = value || '';
+    if (hasText(current) && String(current).trim() !== String(value || '').trim()) {
+      prefill = current + '\n\n— KI-Ergänzung —\n' + value;
+    }
+    return '<textarea id="' + id + '" class="ai ai-ta" rows="3"' + dis + '>' + esc(prefill) + '</textarea>';
+  }
   if (f.type === 'select') return '<select id="' + id + '" class="ai ai-sel"' + dis + '>' + opts(f.options || [], String(value || '')) + '</select>';
   return '<input id="' + id + '" class="ai" value="' + esc(displayValue(value, f.type)) + '"' + dis + '>';
 }
@@ -1315,9 +1332,9 @@ function applyEnhanceSuggestions() {
     var id = 'enh-p-' + f.key;
     var use = document.getElementById(id + '-use');
     if (!use || !use.checked || use.disabled) return;
-    var value = valueFromControl(id, f);
-    if (f.type === 'array') value = unique(arr(p[f.key]).concat(arr(value)));
-    pPayload[f.key] = value;
+    // Box already shows the merged/combined value (see inputForSuggestion) —
+    // it's the source of truth, so no extra merge with the old value here.
+    pPayload[f.key] = valueFromControl(id, f);
   });
 
   if (Object.keys(pPayload).length) {
@@ -1335,17 +1352,15 @@ function applyEnhanceSuggestions() {
       var id = 'enh-e-' + i + '-' + f.key;
       var use = document.getElementById(id + '-use');
       if (!use || !use.checked) return;
-      var value = valueFromControl(id, f);
-      if (f.key === 'tags')   value = unique(arr(entry.tags).concat(arr(value)));
-      if (f.key === 'themen') value = unique(arr(entry.themen).concat(arr(value)));
-      payload[f.key] = value;
+      // Box already shows the merged/combined value (see inputForSuggestion).
+      payload[f.key] = valueFromControl(id, f);
     });
     if (Object.keys(payload).length) {
-      // Auto-map tags → themen: collect all final tags, derive themes, merge in
-      var finalTags = unique(arr(entry.tags).concat(arr(payload.tags)));
+      // Auto-map tags → themen, based on whichever tag set will actually be saved.
+      var finalTags = arr(payload.tags !== undefined ? payload.tags : entry.tags);
       var autoThemen = finalTags.map(themeForTag).filter(Boolean);
       if (autoThemen.length) {
-        payload.themen = unique(arr(payload.themen || entry.themen).concat(autoThemen));
+        payload.themen = unique(arr(payload.themen !== undefined ? payload.themen : entry.themen).concat(autoThemen));
       }
       jobs.push(patchSupa('entries', entry, payload).then(function(saved) {
         Object.assign(entry, saved || payload);
@@ -1521,7 +1536,7 @@ function singleEntryEnhanceHtml(x, sug) {
   var html =
     '<div class="enhance-panel" style="margin-bottom:0">' +
       '<div class="enhance-hd">' +
-        '<div><div class="enhance-title">Vorschlag prüfen</div><div class="enhance-sub">Häkchen setzen, Werte bei Bedarf ändern, dann übernehmen.</div></div>' +
+        '<div><div class="enhance-title">Vorschlag prüfen</div><div class="enhance-sub">Häkchen setzen, Werte bei Bedarf ändern, dann übernehmen. Tags/Themen werden ergänzt, Text wird angehängt — beides direkt im Feld editierbar.</div></div>' +
         '<button class="mini-btn single-enhance-cancel">Zurück</button>' +
       '</div>' +
       '<div class="review-entry-prev">' + esc(entryText(x) || x.preview || '') + '</div>' +
@@ -1536,7 +1551,7 @@ function singleEntryEnhanceHtml(x, sug) {
     html += '<div class="review-field">' +
       '<label><input type="checkbox" id="' + id + '-use"' + checked + '> ' + esc(f.label) + '</label>' +
       '<div class="review-current">Aktuell: ' + esc(displayValue(x[f.key], f.type) || '—') + '</div>' +
-      inputForSuggestion(id, f, suggestion, false) +
+      inputForSuggestion(id, f, suggestion, false, x[f.key]) +
     '</div>';
   });
   if (!shown) html += '<div class="readonly-note">Gemini hat keine nutzbaren Felder vorgeschlagen.</div>';
@@ -1559,20 +1574,21 @@ function saveSingleEntryEnhance(root, x) {
     var id = prefix + '-' + f.key;
     var use = document.getElementById(id + '-use');
     if (!use || !use.checked) return;
-    var value = valueFromControl(id, f);
-    if (f.key === 'tags')   value = unique(arr(x.tags).concat(arr(value)));
-    if (f.key === 'themen') value = unique(arr(x.themen).concat(arr(value)));
-    payload[f.key] = value;
+    // The box already shows the merged (existing ∪ suggested) value for
+    // list fields and the combined text for prose fields — it's the
+    // source of truth, including any trims the user made, so no extra
+    // merge-with-old happens here (that would silently undo those edits).
+    payload[f.key] = valueFromControl(id, f);
   });
   if (!Object.keys(payload).length) {
     if (msg) msg.textContent = 'Keine Felder ausgewählt.';
     return;
   }
-  // Auto-map tags → themen
-  var finalTags = unique(arr(x.tags).concat(arr(payload.tags)));
+  // Auto-map tags → themen, based on whichever tag set will actually be saved.
+  var finalTags = arr(payload.tags !== undefined ? payload.tags : x.tags);
   var autoThemen = finalTags.map(themeForTag).filter(Boolean);
   if (autoThemen.length) {
-    payload.themen = unique(arr(payload.themen || x.themen).concat(autoThemen));
+    payload.themen = unique(arr(payload.themen !== undefined ? payload.themen : x.themen).concat(autoThemen));
   }
   btn.disabled = true; btn.textContent = 'Speichert…';
   patchSupa('entries', x, payload).then(function(saved) {

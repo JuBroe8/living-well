@@ -170,6 +170,23 @@ function detectUrls(text) {
   return (text.match(/https?:\/\/[^\s<>"{}|\\^`[\]]+/g) || []).slice(0, 2);
 }
 
+// Grounds the model's idea of a "good source" in citations the redaction has
+// already vetted, instead of only the abstract format rules in BASE_PROMPT.
+function buildSourceExamplesBlock(examples) {
+  if (!Array.isArray(examples) || !examples.length) return '';
+  const lines = examples
+    .filter((e) => e && typeof e === 'object' && e.quelle)
+    .slice(0, 5)
+    .map((e, i) => {
+      const quelle = String(e.quelle).slice(0, 200);
+      const url = e.quelle_url ? String(e.quelle_url).slice(0, 300) : '';
+      const quality = e.quellenqualitaet ? String(e.quellenqualitaet).slice(0, 20) : '';
+      return `${i + 1}. ${quelle}${url ? ` (${url})` : ''}${quality ? ` — Qualität: ${quality}` : ''}`;
+    });
+  if (!lines.length) return '';
+  return `\n\nBEISPIELE FÜR BEREITS GEPRÜFTE, GUTE QUELLENANGABEN IN UNSEREM BESTAND:\n${lines.join('\n')}\nRichte Recherche und Quellenformat an Art und Präzision dieser Beispiele aus — bevorzuge denselben Quellentyp (Primärwerke, seriöse Biographien, geprüfte Archive), nicht Social Media oder unbelegte Zusammenfassungen.`;
+}
+
 function groundingSummary(result) {
   const metadata = result && result.candidates && result.candidates[0] && result.candidates[0].groundingMetadata;
   if (!metadata) return { used: false, sources: [], queries: [] };
@@ -207,7 +224,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { input, context } = req.body || {};
+  const { input, context, sourceExamples } = req.body || {};
   if (!input || !input.trim()) return res.status(400).json({ error: 'Input fehlt' });
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -228,9 +245,9 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  const systemPrompt = context && context.trim()
-    ? BASE_PROMPT + `\n\nZUSÄTZLICHER FOKUS FÜR DIESE RECHERCHE:\n${context.trim()}`
-    : BASE_PROMPT;
+  const systemPrompt = BASE_PROMPT
+    + buildSourceExamplesBlock(sourceExamples)
+    + (context && context.trim() ? `\n\nZUSÄTZLICHER FOKUS FÜR DIESE RECHERCHE:\n${context.trim()}` : '');
 
   const apiKeys = [apiKey, process.env.GEMINI_API_KEY_2].filter(Boolean);
   let lastErr;
@@ -298,3 +315,5 @@ module.exports = async function handler(req, res) {
   console.error('Gemini error:', lastErr);
   return res.status(500).json({ error: 'Fehler bei der KI-Analyse: ' + lastErr.message });
 };
+
+module.exports.buildSourceExamplesBlock = buildSourceExamplesBlock;

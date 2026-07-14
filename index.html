@@ -2012,6 +2012,23 @@ function openSourceCount() {
   return entries.filter(entryUnchecked).length;
 }
 
+// Feeds the AI's source-research prompt with real examples of sources we've
+// already vetted, so it targets the same kind of citation instead of just
+// following abstract rules. Only entries a human/AI has already rated
+// primaer/geprueft qualify — roh/unbekannt entries would teach the wrong lesson.
+function bestSourceExamples() {
+  return entries
+    .filter(function(e) { return (e.quellenqualitaet === 'geprueft' || e.quellenqualitaet === 'primaer') && hasText(e.quelle); })
+    .sort(function(a, b) {
+      var rank = { geprueft: 1, primaer: 0 };
+      return (rank[b.quellenqualitaet] - rank[a.quellenqualitaet]) || ((b.staerke || 0) - (a.staerke || 0));
+    })
+    .slice(0, 5)
+    .map(function(e) {
+      return { quelle: e.quelle, quelle_url: e.quelle_url || '', quellenqualitaet: e.quellenqualitaet };
+    });
+}
+
 function rPilot(main) {
   main.innerHTML = '';
   var book = activeBook();
@@ -2202,7 +2219,7 @@ function resumeQueuedResearch() {
     .then(function(saved) {
       if (!saved) { var err = new Error('Job wurde bereits übernommen'); err.code = 'JOB_ALREADY_CLAIMED'; throw err; }
       Object.assign(job, saved);
-      return fetch('/api/extract', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ input:job.input_name, context:job.context || '' }) });
+      return fetch('/api/extract', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ input:job.input_name, context:job.context || '', sourceExamples:bestSourceExamples() }) });
     })
     .then(function(r) { return r.json().then(function(data) {
       if (data._meta && data._meta.usage) persistAiUsage(data._meta.usage, job, person, r.ok ? 'succeeded' : 'failed', data.error);
@@ -2668,7 +2685,7 @@ function runNameResearch(name, ctx, resolvedPerson) {
   return claim.then(function() { return fetch('/api/extract', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: name, context: ctx })
+    body: JSON.stringify({ input: name, context: ctx, sourceExamples: bestSourceExamples() })
   }); })
   .then(function(r) {
     return r.json().then(function(data) {

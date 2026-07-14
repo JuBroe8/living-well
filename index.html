@@ -42,7 +42,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .tab { appearance: none; background: transparent; font-family: inherit; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; padding: 11px 16px; cursor: pointer; color: #777; border: 0; border-bottom: 2px solid transparent; transition: all .15s; user-select: none; white-space: nowrap }
 .tab:hover { color: #999 }
 .tab.on { color: #e8e8e8; border-bottom-color: #e8e8e8 }
-.tab:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #b98a1d; outline-offset: 2px }
+.tab:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, .pc:focus-visible { outline: 2px solid #b98a1d; outline-offset: 2px }
 .tab-add { margin-left: auto; color: #eee; font-weight: 700 }
 .tab-sep { width: 1px; background: #333; height: 18px; align-self: center; margin: 0 6px; display: none }
 .back-btn { font-size: 11px; color: #555; cursor: pointer; padding: 11px 14px; transition: color .15s; display: none; align-items: center; gap: 6px; letter-spacing: .03em }
@@ -687,10 +687,18 @@ function mkPCard(p) {
   var ec  = personEntries(p).length;
   var dm  = personDashboardModel(p);
   var dossier = dossierModel(p), candidate = candidateFor(p), fit = fitScore(candidate);
-  var gaps = dm.gaps.slice(0, 2).map(function(g) { return '<span class="pill pill-w">' + esc(g) + '</span>'; }).join('');
-  var tags = (p.tags || []).map(function(t) { return '<span class="pill">' + esc(t) + '</span>'; }).join('');
-  var formats = arr(p.format_eignung).slice(0, 2).map(function(t) { return '<span class="pill pill-q">' + esc(label(t)) + '</span>'; }).join('');
+  var pillItems = [];
+  arr(p.format_eignung).slice(0, 2).forEach(function(t) { pillItems.push({ cls: 'pill pill-q', text: label(t) }); });
+  dm.gaps.slice(0, 2).forEach(function(g) { pillItems.push({ cls: 'pill pill-w', text: g }); });
+  (p.tags || []).forEach(function(t) { pillItems.push({ cls: 'pill', text: t }); });
+  var MAX_PILLS = 4;
+  var shownPills = pillItems.slice(0, MAX_PILLS);
+  var hiddenCount = pillItems.length - shownPills.length;
+  var tagsHtml = shownPills.map(function(item) { return '<span class="' + item.cls + '">' + esc(item.text) + '</span>'; }).join('') +
+    (hiddenCount > 0 ? '<span class="pill">+' + hiddenCount + '</span>' : '');
   var c = document.createElement('div'); c.className = 'pc';
+  c.setAttribute('role', 'button');
+  c.tabIndex = 0;
   c.innerHTML =
     '<div class="pc-top">' +
       '<div class="pc-name">' + esc(p.name) + '</div>' +
@@ -702,8 +710,15 @@ function mkPCard(p) {
       (ec > 0 ? ec + ' Eintr' + (ec === 1 ? 'ag' : 'äge') : 'Noch kein Material') +
     '</div>' +
     '<div class="dossier-row"><span class="pill ' + (dossier.count >= 6 ? 'pill-s' : 'pill-q') + '">Dossier ' + dossier.count + '/8</span>' + (fit !== null ? '<span class="pill pill-s">Pilot ' + fit + '/12</span>' : '') + '</div>' +
-    ((formats || gaps || tags) ? '<div class="pc-tags">' + formats + gaps + tags + '</div>' : '');
-  c.onclick = function() { showProfile(p); };
+    (tagsHtml ? '<div class="pc-tags">' + tagsHtml + '</div>' : '');
+  var open = function() { showProfile(p); };
+  c.onclick = open;
+  c.onkeydown = function(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      if (e.key !== 'Enter') e.preventDefault();
+      open();
+    }
+  };
   return c;
 }
 

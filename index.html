@@ -2431,7 +2431,9 @@ function rKosten(main) {
 
   var html = '<div class="dash-hero">' +
     '<div class="dash-title">KI-Kosten &amp; Limits</div>' +
-    '<div class="dash-copy">Aus den bei jedem KI-Lauf protokollierten Token- und Kostenschätzungen berechnet (' + aiRuns.length + ' Läufe insgesamt seit Start).</div>' +
+    '<div class="dash-copy">Aus den bei jedem KI-Lauf protokollierten Token- und Kostenschätzungen berechnet (' + aiRuns.length + ' Läufe insgesamt seit Start). ' +
+      'Der KI-Ablauf läuft in zwei Schritten: eine Google-Suche (braucht den bezahlten Schlüssel, kostet echtes Geld) und danach ein reiner Textbaustein ohne Suche, der über einen zweiten, kostenlosen Schlüssel laufen kann. ' +
+      'Läuft dieser zweite Schritt über den kostenlosen Schlüssel, zeigt diese Seite dafür 0,00 € — übrig bleibt nur die Such-Gebühr aus Schritt eins, falls eine Suche stattgefunden hat.</div>' +
   '</div>';
 
   html += '<div class="metric-grid">' +

@@ -225,12 +225,14 @@ async function generateWithModelFallback(ai, request, parseAndValidate) {
 async function generateStructured(freeApiKey, paidAi, request, parseAndValidate) {
   if (freeApiKey) {
     try {
-      return await generateWithModelFallback(new GoogleGenAI({ apiKey: freeApiKey }), request, parseAndValidate);
+      const r = await generateWithModelFallback(new GoogleGenAI({ apiKey: freeApiKey }), request, parseAndValidate);
+      return { ...r, usedFreeKey: true };
     } catch (freeErr) {
       console.warn('Free-tier structuring call failed, falling back to paid key:', freeErr.message);
     }
   }
-  return generateWithModelFallback(paidAi, request, parseAndValidate);
+  const r = await generateWithModelFallback(paidAi, request, parseAndValidate);
+  return { ...r, usedFreeKey: false };
 }
 
 function parseJsonOrThrow(result, validate) {
@@ -316,11 +318,13 @@ module.exports = async function handler(req, res) {
             temperature: 0.6
           }
         }, (result) => parseJsonOrThrow(result, (d) => Array.isArray(d.entries)));
-        const { result, model, data } = generated;
-        usages.push(calculateUsage({
+        const { result, model, data, usedFreeKey } = generated;
+        const structuringUsage = calculateUsage({
           usageMetadata: result.usageMetadata, model, operation: 'enhance_expand',
           durationMs: Date.now() - requestStartedAt
-        }));
+        });
+        if (usedFreeKey) { structuringUsage.estimatedCostUsd = 0; structuringUsage.estimatedCostEur = 0; }
+        usages.push(structuringUsage);
         const usage = mergeUsage(usages);
         recordUsage(usage);
 
@@ -371,12 +375,14 @@ module.exports = async function handler(req, res) {
           temperature: 0.35
         }
       }, (result) => parseJsonOrThrow(result, (d) => d.person && Array.isArray(d.entries)));
-      const { result, model, data } = generated;
+      const { result, model, data, usedFreeKey } = generated;
 
-      usages.push(calculateUsage({
+      const structuringUsage = calculateUsage({
         usageMetadata: result.usageMetadata, model, operation: 'enhance',
         durationMs: Date.now() - requestStartedAt
-      }));
+      });
+      if (usedFreeKey) { structuringUsage.estimatedCostUsd = 0; structuringUsage.estimatedCostEur = 0; }
+      usages.push(structuringUsage);
       const usage = mergeUsage(usages);
       recordUsage(usage);
 

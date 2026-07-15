@@ -279,21 +279,28 @@ module.exports = async function handler(req, res) {
         config: { systemInstruction: systemPrompt, responseMimeType: 'application/json', temperature: 0.55 }
       };
       let result;
+      let structuringUsedFreeKey = false;
       if (freeApiKey) {
         try {
           result = await generateWithTransientRetry(new GoogleGenAI({ apiKey: freeApiKey }), structuringRequest);
+          structuringUsedFreeKey = true;
         } catch (freeErr) {
           console.warn('Free-tier structuring call failed, falling back to paid key:', freeErr.message);
         }
       }
       if (!result) result = await generateWithTransientRetry(ai, structuringRequest);
 
-      usages.push(calculateUsage({
+      const structuringUsage = calculateUsage({
         usageMetadata: result.usageMetadata,
         model: MODEL,
         operation: 'extract',
         durationMs: Date.now() - requestStartedAt
-      }));
+      });
+      // calculateUsage always prices against the paid-tier table — if a
+      // free-tier project key actually served this call, the real cost was
+      // 0, so the estimate would otherwise overstate what this run cost.
+      if (structuringUsedFreeKey) { structuringUsage.estimatedCostUsd = 0; structuringUsage.estimatedCostEur = 0; }
+      usages.push(structuringUsage);
       const usage = mergeUsage(usages);
       recordUsage(usage);
 

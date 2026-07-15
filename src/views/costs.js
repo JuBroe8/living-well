@@ -17,23 +17,50 @@ export function rKosten(main) {
   function sumCost(list) { return list.reduce(function(s, r) { return s + Number(r.estimated_cost_eur || 0); }, 0); }
   function sumTokens(list) { return list.reduce(function(s, r) { return s + Number(r.total_tokens || 0); }, 0); }
   function groundingCount(list) { return list.reduce(function(s, r) { return s + Number((r.pricing && r.pricing.groundingRequests) || 0); }, 0); }
+  // Each run's estimated_cost_eur prices every grounding request at full
+  // list price, as if the free monthly quota didn't exist — so this number
+  // is always higher than what Google actually bills while a month stays
+  // under 5,000 grounded prompts. Net that back out for a number that
+  // actually tracks real billing, using each run's own recorded rate
+  // (pricing.searchUsdPerGroundedPrompt/usdToEurRate) rather than a
+  // hardcoded one, since the rate can differ by model/run.
+  function groundingCostEur(list) {
+    return list.reduce(function(s, r) {
+      var p = r.pricing || {};
+      var n = Number(p.groundingRequests || 0);
+      var rateEur = Number(p.searchUsdPerGroundedPrompt || 0) * Number(p.usdToEurRate || 0);
+      return s + n * rateEur;
+    }, 0);
+  }
 
   var today = since(startOfToday), week = since(startOfWeek), month = since(startOfMonth), lastHour = since(oneHourAgo);
   var groundedThisMonth = groundingCount(month);
   var groundingPct = Math.min(100, Math.round((groundedThisMonth / GEMINI_GROUNDING_FREE_MONTHLY) * 100));
+  var monthGroundingCostEur = groundingCostEur(month);
+  var monthAvgRatePerRequest = groundedThisMonth ? monthGroundingCostEur / groundedThisMonth : 0;
+  var freeGroundingRequestsThisMonth = Math.min(groundedThisMonth, GEMINI_GROUNDING_FREE_MONTHLY);
+  var freeGroundingSavingsEur = freeGroundingRequestsThisMonth * monthAvgRatePerRequest;
+  var expectedMonthCost = Math.max(0, sumCost(month) - freeGroundingSavingsEur);
 
   var html = '<div class="dash-hero">' +
     '<div class="dash-title">KI-Kosten &amp; Limits</div>' +
     '<div class="dash-copy">Aus den bei jedem KI-Lauf protokollierten Token- und Kostenschätzungen berechnet (' + state.aiRuns.length + ' Läufe insgesamt seit Start). ' +
       'Der KI-Ablauf läuft in zwei Schritten: eine Google-Suche (braucht den bezahlten Schlüssel, kostet echtes Geld) und danach ein reiner Textbaustein ohne Suche, der über einen zweiten, kostenlosen Schlüssel laufen kann. ' +
-      'Läuft dieser zweite Schritt über den kostenlosen Schlüssel, zeigt diese Seite dafür 0,00 € — übrig bleibt nur die Such-Gebühr aus Schritt eins, falls eine Suche stattgefunden hat.</div>' +
+      'Läuft dieser zweite Schritt über den kostenlosen Schlüssel, zeigt diese Seite dafür 0,00 € — übrig bleibt nur die Such-Gebühr aus Schritt eins, falls eine Suche stattgefunden hat. ' +
+      'Wichtig: Diese Zahlen sind Listenpreis-Schätzungen aus den Token-/Suchmengen, keine Live-Abfrage bei Google. Die echte Google Cloud Console kann niedriger stehen oder erst mit Verzögerung (oft mehrere Stunden bis über einen Tag) nachziehen — außerdem rechnet unsere Schätzung jede Google-Suche einzeln ab, auch wenn sie noch im kostenlosen Monatskontingent liegt (siehe „Diesen Monat, erwartete Abrechnung" unten).</div>' +
   '</div>';
 
   html += '<div class="metric-grid">' +
     dashMetric(formatEuro(sumCost(today)), 'Heute') +
     dashMetric(formatEuro(sumCost(week)), 'Diese Woche') +
-    dashMetric(formatEuro(sumCost(month)), 'Diesen Monat') +
-    dashMetric(formatEuro(sumCost(state.aiRuns)), 'Insgesamt') +
+    dashMetric(formatEuro(sumCost(month)), 'Diesen Monat (Listenpreis)') +
+    dashMetric(formatEuro(sumCost(state.aiRuns)), 'Insgesamt (Listenpreis)') +
+  '</div>' +
+  '<div class="dash-card" style="margin-bottom:12px">' +
+    '<div class="dash-card-hd"><div><div class="dash-card-title">Diesen Monat, erwartete Abrechnung</div>' +
+      '<div class="dash-card-note">Listenpreis abzüglich der ' + freeGroundingRequestsThisMonth + ' Suchanfrage' + (freeGroundingRequestsThisMonth === 1 ? '' : 'n') + ' im kostenlosen Monatskontingent (−' + formatEuro(freeGroundingSavingsEur) + '). Das kommt der echten Google-Rechnung näher als die Listenpreis-Zahl oben.</div></div>' +
+      '<div class="metric-n">' + formatEuro(expectedMonthCost) + '</div>' +
+    '</div>' +
   '</div>';
 
   html += '<div class="dash-card" style="margin-bottom:12px">' +

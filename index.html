@@ -186,6 +186,10 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .sb-kandidat  { background: #aaa; color: #fff }
 .profile-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px }
 .profile-tag { font-size: 11px; color: var(--t2); background: var(--bg2); border: 1px solid var(--br); border-radius: 20px; padding: 3px 11px; white-space: nowrap }
+.profile-subnav { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--br) }
+.profile-subnav-btn { appearance: none; background: transparent; border: 0; border-bottom: 2px solid transparent; font-family: inherit; font-size: 12px; letter-spacing: .03em; color: var(--t3); padding: 9px 4px; margin-right: 18px; cursor: pointer }
+.profile-subnav-btn:hover { color: var(--t2) }
+.profile-subnav-btn.on { color: var(--tx); border-bottom-color: var(--tx); font-weight: 600 }
 .profile-curation { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 16px 18px; margin-bottom: 12px }
 .curation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px }
 .curation-item.full { grid-column: 1 / -1 }
@@ -802,6 +806,7 @@ function showProfile(p) {
     personsScrollBeforeProfile = window.scrollY;
   }
   view = 'profile'; profilePerson = p; profileEdit = false; fitPanelExpanded = false;
+  profileTab = 'overview'; profileEntryFilter = null;
   document.querySelectorAll('.tab').forEach(function(x) {
     x.classList.toggle('on', x.dataset.tab === 'persons');
   });
@@ -995,26 +1000,35 @@ function mkPCard(p) {
 }
 
 // ── PROFILE ──────────────────────────────────────
+var profileTab = 'overview';
+var profileEntryFilter = null;
+var PROFILE_TABS = [['overview', 'Übersicht'], ['material', 'Material'], ['gallery', 'Bilder & Gestaltung'], ['details', 'Details']];
+function setProfileTab(t) { profileTab = t; render(); }
+
+function profileMainAction(p) {
+  var a = nextActionForPerson(p);
+  if (a.key === 'review' && a.jobId) return { label: a.label, run: function() { openResearchJob(a.jobId); } };
+  if (a.key === 'research') return { label: 'Recherche starten', run: function() { profileTab = 'material'; render(); moreResearch(); } };
+  if (a.key === 'dossier') return { label: 'Material ergänzen', run: function() { profileTab = 'material'; render(); } };
+  if (a.key === 'fit') return { label: 'Fit bewerten', run: function() { fitPanelExpanded = true; render(); } };
+  if (a.key === 'decide') return { label: 'Auswahl entscheiden', run: function() { goTab('pilot'); } };
+  if (a.key === 'page') return { label: 'Seite gestalten', run: function() { openPageWorkshopForPerson(p); } };
+  if (a.key === 'pilot') return { label: 'Details ausarbeiten', run: function() { profileTab = 'details'; render(); } };
+  return null;
+}
+
 function rProfile(main) {
   var p = profilePerson;
   if (!p) { main.innerHTML = ''; return; }
   if (profileEdit) { rProfileEdit(main, p); return; }
 
   var pEntries = personEntries(p);
-  var byKat = {};
-  pEntries.forEach(function(x) {
-    var k = x.kategorie || 'Sonstige';
-    if (!byKat[k]) byKat[k] = [];
-    byKat[k].push(x);
-  });
-
   var sbClass = p.status === 'bereit' ? 'sb-bereit' : p.status === 'aktiv' ? 'sb-aktiv' : 'sb-kandidat';
   var sbLabel = p.status === 'bereit' ? 'Bereit' : p.status === 'aktiv' ? 'Aktiv' : 'Kandidat';
   var tags = (p.tags || []).map(function(t) { return '<span class="profile-tag">' + esc(t) + '</span>'; }).join('');
 
   main.innerHTML = '';
 
-  // Header
   var hd = document.createElement('div'); hd.className = 'profile-hd';
   hd.innerHTML =
     '<div class="profile-hd-top">' +
@@ -1028,24 +1042,37 @@ function rProfile(main) {
           '<span class="status-badge ' + sbClass + '">' + sbLabel + '</span>' +
         '</div>' +
       '</div>' +
-      '<div>' +
-        '<div class="actions">' +
-          '<button class="mini-btn" onclick="moreResearch()">Recherche ergänzen</button>' +
-          '<button class="mini-btn" onclick="editProfile()">Bearbeiten</button>' +
-        '</div>' +
-        enhanceFilterBar(p, pEntries) +
-      '</div>' +
     '</div>' +
     (tags ? '<hr class="profile-divider"><div class="profile-tags">' + tags + '</div>' : '');
   main.appendChild(hd);
 
-  var gallery = document.createElement('div'); gallery.className = 'profile-bio';
-  gallery.innerHTML = galleryHtml(p);
-  main.appendChild(gallery);
+  var nav = document.createElement('div'); nav.className = 'profile-subnav';
+  nav.innerHTML = PROFILE_TABS.map(function(t) {
+    return '<button class="profile-subnav-btn' + (profileTab === t[0] ? ' on' : '') + '" data-profile-tab="' + t[0] + '">' + esc(t[1]) + '</button>';
+  }).join('');
+  nav.querySelectorAll('[data-profile-tab]').forEach(function(btn) {
+    btn.onclick = function() { setProfileTab(btn.getAttribute('data-profile-tab')); };
+  });
+  main.appendChild(nav);
 
-  if (enhanceState.personName === p.name && enhanceState.phase !== 'idle') {
-    main.appendChild(renderEnhancePanel(p));
-  }
+  if (profileTab === 'material') renderProfileMaterial(main, p, pEntries);
+  else if (profileTab === 'gallery') renderProfileGallery(main, p);
+  else if (profileTab === 'details') renderProfileDetails(main, p);
+  else renderProfileOverview(main, p, pEntries);
+}
+
+function renderProfileOverview(main, p, pEntries) {
+  var d = dossierModel(p);
+  var dossierCard = document.createElement('div'); dossierCard.className = 'dash-card';
+  var action = profileMainAction(p);
+  dossierCard.innerHTML =
+    '<div class="dash-card-hd"><div><div class="dash-card-title">Dossierstand</div><div class="dash-card-note">' + d.count + '/8 Pflichtpunkte erfüllt.</div></div>' +
+    (action ? '<button class="mini-btn primary" id="profile-main-action">' + esc(action.label) + '</button>' : '') +
+    '</div>' +
+    '<div class="dossier-row">' + d.checks.map(function(x) { return '<span class="dossier-check ' + (x[1] ? '' : 'miss') + '">' + (x[1] ? '✓ ' : '○ ') + esc(x[0]) + '</span>'; }).join('') + '</div>';
+  main.appendChild(dossierCard);
+  var actionBtn = dossierCard.querySelector('#profile-main-action');
+  if (actionBtn && action) actionBtn.onclick = action.run;
 
   main.appendChild(renderFitPanel(p));
 
@@ -1055,25 +1082,35 @@ function rProfile(main) {
     '<div class="curation-grid">' +
       curationItem('Lebensprinzip', p.lebensprinzip, true, true) +
       curationItem('Buchthese', p.buchthese, true) +
-      curationItem('Archetyp', p.archetyp, false) +
       curationItem('Spannung', p.spannung, false) +
-      curationItem('Visuelles Motiv', p.visuelles_motiv, false) +
-      curationItem('Format-Eignung', arr(p.format_eignung).map(label).join(', '), false) +
-      curationItem('Motive aus Tags', profileTagThemes(p).map(label).join(', '), false) +
-      curationItem('Notiz', p.kurationsnotiz, false, false, true) +
     '</div>';
   main.appendChild(cur);
+}
 
-  // Bio
-  if (p.note) {
-    var bio = document.createElement('div'); bio.className = 'profile-bio';
-    bio.innerHTML =
-      '<div class="profile-bio-lbl">Biographie</div>' +
-      '<div class="profile-bio-text">' + formatBio(p.note) + '</div>';
-    main.appendChild(bio);
+function renderProfileMaterial(main, p, pEntries) {
+  var byKat = {};
+  pEntries.forEach(function(x) {
+    var k = x.kategorie || 'Sonstige';
+    if (!byKat[k]) byKat[k] = [];
+    byKat[k].push(x);
+  });
+  var openSources = pEntries.filter(entryUnchecked).length;
+
+  var actionsRow = document.createElement('div'); actionsRow.className = 'dash-card';
+  actionsRow.innerHTML =
+    '<div class="dash-card-hd"><div><div class="dash-card-title">Material</div><div class="dash-card-note">' +
+      pEntries.length + ' Eintr' + (pEntries.length === 1 ? 'ag' : 'äge') +
+      (openSources ? ' · ' + openSources + ' Quelle' + (openSources === 1 ? '' : 'n') + ' ungeprüft' : ' · alle Quellen geprüft') +
+      '</div></div>' +
+      '<div class="actions"><button class="mini-btn primary" onclick="moreResearch()">Recherche ergänzen</button></div>' +
+    '</div>' +
+    enhanceFilterBar(p, pEntries);
+  main.appendChild(actionsRow);
+
+  if (enhanceState.personName === p.name && enhanceState.phase !== 'idle') {
+    main.appendChild(renderEnhancePanel(p));
   }
 
-  // Entry sections
   if (pEntries.length === 0) {
     var none = document.createElement('div'); none.className = 'no-entries';
     none.textContent = '— Einträge werden hier erscheinen sobald sie hinzugefügt werden —';
@@ -1081,8 +1118,26 @@ function rProfile(main) {
     return;
   }
 
+  var katFilter = document.createElement('div'); katFilter.className = 'chip-row'; katFilter.style.margin = '14px 0';
+  katFilter.innerHTML = ['Alle'].concat(KAT_ORDER).map(function(k) {
+    var active = (k === 'Alle' && !profileEntryFilter) || profileEntryFilter === k;
+    return '<button class="chip' + (active ? ' on' : '') + '" data-kat-filter="' + esc(k) + '">' + esc(k) + '</button>';
+  }).join('');
+  katFilter.querySelectorAll('[data-kat-filter]').forEach(function(btn) {
+    btn.onclick = function() { profileEntryFilter = btn.getAttribute('data-kat-filter') === 'Alle' ? null : btn.getAttribute('data-kat-filter'); render(); };
+  });
+  main.appendChild(katFilter);
+
   var orderedKats = KAT_ORDER.filter(function(k) { return byKat[k]; })
-    .concat(Object.keys(byKat).filter(function(k) { return KAT_ORDER.indexOf(k) < 0; }));
+    .concat(Object.keys(byKat).filter(function(k) { return KAT_ORDER.indexOf(k) < 0; }))
+    .filter(function(k) { return !profileEntryFilter || k === profileEntryFilter; });
+
+  if (!orderedKats.length) {
+    var noneKat = document.createElement('div'); noneKat.className = 'no-entries';
+    noneKat.textContent = '— Keine Einträge in dieser Kategorie —';
+    main.appendChild(noneKat);
+    return;
+  }
 
   orderedKats.forEach(function(kat) {
     var list = byKat[kat];
@@ -1096,6 +1151,49 @@ function rProfile(main) {
     list.forEach(function(x) { sec.appendChild(mkEntryCard(x, false)); });
     main.appendChild(sec);
   });
+}
+
+function renderProfileGallery(main, p) {
+  var gallery = document.createElement('div'); gallery.className = 'profile-bio';
+  gallery.innerHTML = galleryHtml(p);
+  main.appendChild(gallery);
+
+  var pages = bookPages.filter(function(pg) { return String(pg.person_id) === String(p.id); });
+  var pagesCard = document.createElement('div'); pagesCard.className = 'dash-card';
+  pagesCard.innerHTML =
+    '<div class="dash-card-hd"><div><div class="dash-card-title">Buchseiten</div><div class="dash-card-note">' + pages.length + ' Seite' + (pages.length === 1 ? '' : 'n') + ' für diese Person.</div></div>' +
+    '<button class="mini-btn primary" id="profile-new-page">Neue Seite gestalten</button></div>' +
+    (pages.length ? '<div class="queue-list">' + pages.map(function(pg) {
+      return '<div class="queue-row"><div class="queue-name" data-open-page="' + esc(pg.id) + '">' + esc(pg.title || 'Ohne Titel') + '</div><div class="actions"><button class="mini-btn" data-open-page="' + esc(pg.id) + '">Öffnen</button></div></div>';
+    }).join('') + '</div>' : '<div class="readonly-note">Noch keine Seite für diese Person.</div>');
+  main.appendChild(pagesCard);
+  pagesCard.querySelector('#profile-new-page').onclick = function() { openPageWorkshopForPerson(p); };
+  pagesCard.querySelectorAll('[data-open-page]').forEach(function(el) {
+    el.onclick = function() { openPageEditor(el.getAttribute('data-open-page')); goTab('layout'); };
+  });
+}
+
+function renderProfileDetails(main, p) {
+  if (p.note) {
+    var bio = document.createElement('div'); bio.className = 'profile-bio';
+    bio.innerHTML =
+      '<div class="profile-bio-lbl">Biographie</div>' +
+      '<div class="profile-bio-text">' + formatBio(p.note) + '</div>';
+    main.appendChild(bio);
+  }
+
+  var cur = document.createElement('div'); cur.className = 'profile-curation';
+  cur.innerHTML =
+    '<div class="profile-bio-lbl">Details</div>' +
+    '<div class="curation-grid">' +
+      curationItem('Archetyp', p.archetyp, false) +
+      curationItem('Visuelles Motiv', p.visuelles_motiv, false) +
+      curationItem('Format-Eignung', arr(p.format_eignung).map(label).join(', '), false) +
+      curationItem('Motive aus Tags', profileTagThemes(p).map(label).join(', '), false) +
+      curationItem('Notiz', p.kurationsnotiz, false, false, true) +
+    '</div>' +
+    '<div class="actions" style="margin-top:14px"><button class="mini-btn primary" onclick="editProfile()">Profil bearbeiten</button></div>';
+  main.appendChild(cur);
 }
 
 function rProfileEdit(main, p) {
@@ -1804,7 +1902,6 @@ function mkEntryCard(x, showPerson) {
   var tags   = (x.tags || []).map(function(t) { return '<span class="pill pill-tag">' + esc(t) + '</span>'; }).join('');
   var meta   = entryMetaPills(x);
   var status = '<span class="buch-badge ' + bbCls + '">' + bbLbl + '</span>' + meta;
-  var sep    = (status && tags) ? '<span class="ce-sep"></span>' : '';
 
   var d = document.createElement('div'); d.className = 'card';
   d.innerHTML =
@@ -1815,7 +1912,7 @@ function mkEntryCard(x, showPerson) {
           ? '<div class="ce-person" data-person="' + esc(x.person) + '">' + esc(x.person) + '</div>'
           : '') +
         (prev ? '<div class="ce-prev">' + esc(prev) + '</div>' : '') +
-        '<div class="ce-meta">' + status + sep + tags + '</div>' +
+        '<div class="ce-meta">' + status + '</div>' +
       '</div>' +
       '<div class="carr">▾</div>' +
     '</div>' +
@@ -1824,6 +1921,7 @@ function mkEntryCard(x, showPerson) {
       (x.anekdote ? '<div><div class="lbl">Anekdote</div><div class="val">'   + esc(x.anekdote) + '</div></div>' : '') +
       (x.fakt     ? '<div><div class="lbl">Fakt</div><div class="val-fakt">'  + esc(x.fakt)     + '</div></div>' : '') +
       entryCurationHtml(x) +
+      (tags ? '<div class="ce-meta" style="margin-top:8px">' + tags + '</div>' : '') +
       (x.buchnotiz? '<div class="buchnotiz-block"><div class="buchnotiz-lbl">Buchrelevanz</div><div class="buchnotiz-text">' + esc(x.buchnotiz) + '</div></div>' : '') +
       (x.quelle || x.quelle_url ? '<div class="src">Quelle: ' + esc(x.quelle || '') + (x.quelle_url ? ' · <a href="' + esc(x.quelle_url) + '" target="_blank" rel="noopener">Link</a>' : '') + '</div>' : '') +
       '<div class="actions"><button class="mini-btn primary entry-enhance-btn">KI-Vorschlag</button><button class="mini-btn entry-edit-btn">Bearbeiten</button></div>' +
@@ -2211,11 +2309,11 @@ function entryText(x) {
   if (x.kategorie === 'Fakt') return x.fakt || x.anekdote || x.quote || '';
   return x.anekdote || x.quote || x.fakt || x.text || '';
 }
+// Closed cards only surface actionable warnings (missing source/link) —
+// Stärke, Buchreife, Quellenqualität and Tags are curatorial detail that
+// belongs to the opened card (entryCurationHtml), not the scanning view.
 function entryMetaPills(x) {
   var bits = '';
-  if (strength(x) >= 4) bits += '<span class="pill pill-s">Stärke ' + strength(x) + '</span>';
-  else if (strength(x) > 0) bits += '<span class="pill">Stärke ' + strength(x) + '</span>';
-  if (x.buchreife) bits += '<span class="pill pill-q">' + esc(label(x.buchreife)) + '</span>';
   if (entryUnchecked(x)) bits += '<span class="pill pill-w">Quelle offen</span>';
   if (entryUnlinked(x)) bits += '<span class="pill pill-w">Zuordnung offen</span>';
   return bits;

@@ -1,0 +1,73 @@
+@media (max-width: 1040px) {
+  .layout-editor-wrap { grid-template-columns: minmax(500px, 1fr) 270px }
+  .layout-page-rail { display: none }
+}
+
+@media (max-width: 840px) {
+  .layout-toolbar { position: static; grid-template-columns: 1fr }
+  .layout-toolbar-tools { justify-content: flex-start }
+  .layout-editor-wrap { display: flex; flex-direction: column }
+  .page-stage { width: 100%; min-height: 0 }
+  .page-canvas-scroll { width: 100% }
+  .layout-props { width: 100%; position: static }
+}
+
+@media (max-width: 640px) {
+  body { padding-bottom: 58px; overflow-x: hidden }
+  .hdr, .bar, .main { padding-left: 1rem; padding-right: 1rem }
+  .hdr { padding-top: 1rem; padding-bottom: 1rem }
+  .hstats { gap: 14px }
+  .hstat-n { font-size: 22px }
+  .tabs { padding: 0; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; box-shadow: 0 -3px 12px rgba(0,0,0,.16) }
+  .tabs-in { justify-content: space-around; overflow: visible }
+  .tab { min-width: 0; flex: 1; padding: 12px 3px 10px; font-size: 0; min-height: 52px; overflow: hidden }
+  .tab::after { content: attr(data-short); display: block; font-size: 8px; letter-spacing: .04em; white-space: nowrap }
+  .tab-more { display: none }
+  .tab-add { margin-left: 0; color: #fff }
+  /* The back button duplicates the highlighted "Personenpool" tab's own
+     onclick (goTab('persons')) — on mobile there isn't room for both in
+     the fixed bottom bar without the tab labels overlapping, so keep only
+     the tab; it's the same action. */
+  .back-btn, .tab-sep { display: none !important }
+  .bar { top: 0; padding-top: 8px; padding-bottom: 8px }
+  .bar-in { flex-wrap: wrap; overflow-x: visible }
+  .srch-wrap { min-width: 0; flex: 1 1 100% }
+  #chips { flex: 1 1 100%; margin-top: 6px; gap: 8px }
+  .chip-group { flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; position: relative }
+  .chip-row { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 2px; scrollbar-width: none }
+  .chip-row::-webkit-scrollbar { display: none }
+  .chip-group::after { content: ''; position: absolute; right: 0; top: 20px; bottom: 2px; width: 26px; background: linear-gradient(to right, transparent, var(--wh)); pointer-events: none }
+  .pgrid { grid-template-columns: 1fr }
+  .pc { padding: 14px }
+  .profile-name { font-size: 24px }
+  .profile-dates-line { font-size: 14px }
+  .profile-hd, .profile-bio { padding: 16px 18px }
+  .profile-hd-top, .add-row { flex-direction: column }
+  .curation-grid, .entry-curation, .form-grid, .form-grid.three, .dash-grid, .review-fields, .fit-grid { grid-template-columns: 1fr }
+  .metric-grid { grid-template-columns: repeat(2, 1fr) }
+  .review-row { grid-template-columns: 24px 1fr }
+  .review-row .review-label { grid-column: 2 }
+  .research-log-row { grid-template-columns: 1fr; gap: 2px }
+  .layout-overview-head { align-items: flex-start; flex-direction: column }
+  .layout-overview-actions { width: 100%; justify-content: flex-start }
+  .layout-overview-actions .ai { flex: 1; min-width: 170px }
+  .layout-page-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+  .layout-page-card { padding: 8px }
+  .layout-page-thumb { width: 132px; height: 187px }
+  .layout-thumb-inner { transform: scale(.275) !important }
+  .layout-toolbar { position: static; grid-template-columns: 1fr; }
+  .layout-toolbar-tools { justify-content: flex-start }
+  .layout-title-input { width: 100%; max-width: none }
+  .layout-editor-wrap { display: flex; flex-direction: column }
+  .page-stage { min-height: 0; width: 100%; justify-content: flex-start; padding: 8px }
+  .page-canvas-scroll { width: 100% }
+  .layout-props { width: 100%; position: static }
+  .pilot-hero { padding: 23px 20px }
+  .pilot-thesis { font-size: 15px }
+  .pilot-board { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px }
+  .pilot-col { min-width: 82vw; scroll-snap-align: start }
+  .fit-head { flex-direction: column }
+  .profile-hd-top { gap: 18px }
+  .ptbl { min-width: 650px }
+  .places-wrap { overflow-x: auto }
+}

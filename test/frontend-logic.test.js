@@ -1,7 +1,10 @@
-// Loads index.html's inline <script> content into a vm context (it's a
-// non-module, global-var script — vm.createContext makes those top-level
-// `var`s land on the context object, so functions like nextActionForPerson
-// become directly callable/assertable without a build step or jsdom).
+// Loads every src/*.js ES module into a single vm context. The app itself
+// loads these as real <script type="module"> files with import/export
+// (see src/app.js) — for this test we strip the import/export syntax and
+// concatenate them, which turns each module's top-level declarations into
+// plain vm-context globals, same as the old single-script era. That's
+// enough to call functions like nextActionForPerson()/dossierModel()
+// directly without a build step, jsdom, or --experimental-vm-modules.
 // DOM/network calls are stubbed to no-ops; these tests only exercise the
 // pure data-derivation logic listed in docs/ux-workflow-implementation.md's
 // "Tests ergänzen" section, not rendering.
@@ -10,6 +13,20 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { test } = require('node:test');
 const assert = require('node:assert');
+
+function walkJsFiles(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return walkJsFiles(full);
+    return entry.name.endsWith('.js') ? [full] : [];
+  });
+}
+
+function stripModuleSyntax(code) {
+  return code
+    .replace(/^import\s+\{[^}]*\}\s+from\s+'[^']*';\s*$/gm, '')
+    .replace(/^export\s+(function|var|const|let)\s/gm, '$1 ');
+}
 
 function stubEl() {
   return {
@@ -29,11 +46,9 @@ function stubEl() {
 }
 
 function loadApp() {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-  const code = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
-    .map((m) => m[1])
-    .join('\n')
-    .replace(/\ninit\(\);\s*$/, '\n'); // don't auto-fetch from Supabase in tests
+  const srcDir = path.join(__dirname, '..', 'src');
+  const files = walkJsFiles(srcDir).filter((f) => path.basename(f) !== 'app.js'); // bootstrap only, not logic
+  const code = files.map((f) => stripModuleSyntax(fs.readFileSync(f, 'utf8'))).join('\n');
 
   const fetchCalls = [];
   const sandbox = {
@@ -67,13 +82,13 @@ function loadApp() {
 }
 
 function seed(app, { persons = [], entries = [], bookCandidates = [], bookPages = [], researchJobs = [], books = [] } = {}) {
-  app.persons = persons;
-  app.entries = entries;
-  app.bookCandidates = bookCandidates;
-  app.bookPages = bookPages;
-  app.researchJobs = researchJobs;
-  app.books = books;
-  app.tableAvailability = { books: true, book_candidates: true, research_jobs: true, book_pages: true };
+  app.state.persons = persons;
+  app.state.entries = entries;
+  app.state.bookCandidates = bookCandidates;
+  app.state.bookPages = bookPages;
+  app.state.researchJobs = researchJobs;
+  app.state.books = books;
+  app.state.tableAvailability = { books: true, book_candidates: true, research_jobs: true, book_pages: true };
 }
 
 function mkPerson(id, name, overrides) {
@@ -83,7 +98,7 @@ function mkPerson(id, name, overrides) {
 test('nextActionForPerson: no material -> Recherche starten', () => {
   const app = loadApp();
   seed(app, { persons: [mkPerson('p1', 'Ohne Material')] });
-  const a = app.nextActionForPerson(app.persons[0]);
+  const a = app.nextActionForPerson(app.state.persons[0]);
   assert.strictEqual(a.key, 'research');
 });
 
@@ -174,14 +189,14 @@ test('personSortComparator("next") ranks review/dossier/fit/page ahead of resear
     persons: [noMaterial, thinDossier],
     entries: [{ id: 'e1', person_id: 'p2', kategorie: 'Anekdote' }],
   });
-  const sorted = app.persons.slice().sort(app.personSortComparator('next'));
+  const sorted = app.state.persons.slice().sort(app.personSortComparator('next'));
   assert.strictEqual(sorted[0].id, 'p2', 'a person with an actionable dossier gap should rank above one with no material at all');
 });
 
 test('personSortComparator("name") is alphabetical (locale-aware)', () => {
   const app = loadApp();
   seed(app, { persons: [mkPerson('p1', 'Zebra'), mkPerson('p2', 'Ärmel'), mkPerson('p3', 'Anton')] });
-  const sorted = app.persons.slice().sort(app.personSortComparator('name')).map((p) => p.name);
+  const sorted = app.state.persons.slice().sort(app.personSortComparator('name')).map((p) => p.name);
   assert.deepStrictEqual(sorted, ['Anton', 'Ärmel', 'Zebra']);
 });
 
@@ -211,7 +226,7 @@ test('pilot queue: pool-stage candidates are never lost, board stages are mutual
   const boardCandidate = { id: 'c2', book_id: 'b1', person_id: 'p2', stage: 'shortlist' };
   seed(app, { persons: [p1, p2], books: [book], bookCandidates: [poolCandidate, boardCandidate] });
 
-  const all = app.bookCandidates.filter((c) => String(c.book_id) === 'b1');
+  const all = app.state.bookCandidates.filter((c) => String(c.book_id) === 'b1');
   const pool = all.filter((c) => !c.stage || c.stage === 'pool');
   const board = all.filter((c) => app.CANDIDATE_STAGES.indexOf(c.stage) >= 0);
   assert.strictEqual(pool.length + board.length, all.length, 'every candidate must be counted in exactly one of pool/board');
@@ -222,7 +237,7 @@ test('pilot queue: pool-stage candidates are never lost, board stages are mutual
 test('savePageBlocks: rapid successive calls are debounced into a single PATCH, not one per call', async () => {
   const app = loadApp();
   const page = { id: 'pg1', blocks: [{ id: 'b1', x: 0 }] };
-  app.layoutState = { page };
+  app.state.layoutState = { page };
 
   app.savePageBlocks();
   app.savePageBlocks();
@@ -236,7 +251,7 @@ test('savePageBlocks: rapid successive calls are debounced into a single PATCH, 
 test('savePageBlocks: a save triggered while one is in flight waits instead of running concurrently', async () => {
   const app = loadApp();
   const page = { id: 'pg1', blocks: [{ id: 'b1', x: 0 }] };
-  app.layoutState = { page };
+  app.state.layoutState = { page };
 
   let resolveFirst;
   const firstResponse = new Promise((resolve) => { resolveFirst = resolve; });

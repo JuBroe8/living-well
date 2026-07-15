@@ -1,0 +1,16 @@
+:root {
+  --bg:  #f7f5f1;
+  --bg2: #f0ede8;
+  --wh:  #ffffff;
+  --br:  #e2ddd7;
+  --br2: #c8c4be;
+  --tx:  #141414;
+  --t2:  #4a4a4a;
+  --t3:  #8a8a8a;
+  --gn:  #2d6a4f;
+  --am:  #9a7200;
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans:  -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --r: 8px;
+  --sh: 0 1px 4px rgba(0,0,0,.07);
+}

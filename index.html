@@ -72,6 +72,8 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .chip-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0 }
 .chip-group-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--t3); font-weight: 700; white-space: nowrap }
 .chip-row { display: flex; gap: 5px; flex-wrap: wrap; min-width: 0 }
+.chip-toggle { font-size: 11px; padding: 4px 11px; border: 1px dashed var(--br2); border-radius: 20px; background: transparent; cursor: pointer; color: var(--t2); white-space: nowrap }
+.chip-toggle:hover { border-color: #999; color: var(--tx) }
 
 /* ── MAIN ── */
 .main { max-width: 1140px; margin: 0 auto; padding: 1.5rem 2rem 5rem }
@@ -482,9 +484,10 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   .bar-in { flex-wrap: wrap; overflow-x: visible }
   .srch-wrap { min-width: 0; flex: 1 1 100% }
   #chips { flex: 1 1 100%; margin-top: 6px; gap: 8px }
-  .chip-group { flex-direction: column; align-items: flex-start; gap: 4px; width: 100% }
+  .chip-group { flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; position: relative }
   .chip-row { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 2px; scrollbar-width: none }
   .chip-row::-webkit-scrollbar { display: none }
+  .chip-group::after { content: ''; position: absolute; right: 0; top: 20px; bottom: 2px; width: 26px; background: linear-gradient(to right, transparent, var(--wh)); pointer-events: none }
   .pgrid { grid-template-columns: 1fr }
   .pc { padding: 14px }
   .profile-name { font-size: 24px }
@@ -547,7 +550,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   </div>
   <button class="tab tab-add" data-tab="add" data-short="+ Name" aria-label="+ Name" onclick="openCapture()">+ Name</button>
   <div class="tab-sep" id="tab-sep"></div>
-  <div class="back-btn" id="back-btn" onclick="goTab('persons')">
+  <div class="back-btn" id="back-btn" onclick="backToPersons()">
     <span class="back-arrow">←</span> Zurück zur Übersicht
   </div>
 </div></nav>
@@ -558,6 +561,13 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
     <input class="srch" id="srch" placeholder="Suchen — Name, Stichwort, Zitat…" oninput="render()">
   </div>
   <div id="chips"></div>
+  <select id="person-sort" class="ai ai-sel" style="display:none" aria-label="Sortierung" onchange="setPersonSort(this.value)">
+    <option value="next">Nächste Aufgabe</option>
+    <option value="updated">Zuletzt bearbeitet</option>
+    <option value="dossier">Dossier am weitesten</option>
+    <option value="entries">Meiste Einträge</option>
+    <option value="name">Name A–Z</option>
+  </select>
   <div class="cnt" id="cnt"></div>
 </div></div>
 
@@ -621,6 +631,10 @@ var LABEL = {
   ungepruefte_quellen: 'Ungeprüfte Quellen',
   formatbereit: 'Format',
   buchreif: 'Buchreif',
+  ohne_material: 'Ohne Material',
+  dossier_offen: 'Dossier offen',
+  dossier_bereit: 'Dossier bereit',
+  fit_offen: 'Fit offen',
   strong_entries: 'Stark',
   unchecked_entries: 'Ungeprüft',
   unlinked_entries: 'Zuordnung offen',
@@ -636,6 +650,9 @@ var LABEL = {
 };
 var profileEdit = false;
 var fitPanelExpanded = false;
+var personSort = 'next';
+var personRenderLimit = 30;
+function setPersonSort(v) { personSort = v; personRenderLimit = 30; render(); }
 var bookPages = [];
 var layoutState = { view: 'list', page: null, selectedBlockId: null, saveStatus: 'saved' };
 var layoutPresetPersonId = null;
@@ -744,6 +761,7 @@ function goTab(t) {
   if (t !== 'layout') layoutPresetPersonId = null;
   if (t === 'pilot') pilotQueueLimit = 12;
   if (t === 'status') dashboardQueueLimit = 10;
+  if (t === 'persons') { personSort = 'next'; personRenderLimit = 30; }
   document.getElementById('back-btn').classList.remove('vis');
   document.getElementById('tab-sep').style.display = 'none';
   document.getElementById('bar').style.display = (t === 'add' || t === 'status' || t === 'pilot' || t === 'kosten' || t === 'layout') ? 'none' : '';
@@ -776,24 +794,85 @@ function openCapture() {
   goTab('add');
 }
 
+var personsSearchBeforeProfile = '';
+var personsScrollBeforeProfile = 0;
 function showProfile(p) {
+  if (view === 'persons') {
+    personsSearchBeforeProfile = document.getElementById('srch').value;
+    personsScrollBeforeProfile = window.scrollY;
+  }
   view = 'profile'; profilePerson = p; profileEdit = false; fitPanelExpanded = false;
   document.querySelectorAll('.tab').forEach(function(x) {
     x.classList.toggle('on', x.dataset.tab === 'persons');
   });
+  document.getElementById('more-tab').classList.remove('on');
   document.getElementById('back-btn').classList.add('vis');
   document.getElementById('tab-sep').style.display = 'block';
   document.getElementById('bar').style.display = 'none';
+  window.scrollTo(0, 0);
   render();
+}
+// Dedicated back-path (instead of goTab('persons')) so the previous search,
+// sort and scroll position of the person pool survive a profile visit —
+// goTab() always resets fil/search for a fresh tab entry, which would
+// otherwise discard the pool's work-in-progress state on every "Zurück".
+function backToPersons() {
+  view = 'persons'; profilePerson = null; profileEdit = false; fitPanelExpanded = false;
+  document.querySelectorAll('.tab').forEach(function(x) {
+    x.classList.toggle('on', x.dataset.tab === 'persons');
+  });
+  document.getElementById('back-btn').classList.remove('vis');
+  document.getElementById('tab-sep').style.display = 'none';
+  document.getElementById('bar').style.display = '';
+  document.getElementById('srch').value = personsSearchBeforeProfile || '';
+  chips(); render();
+  window.scrollTo(0, personsScrollBeforeProfile || 0);
 }
 
 // ── FILTER CHIPS ─────────────────────────────────
+var filterPanelsOpen = {};
+function toggleFilterPanel(key) { filterPanelsOpen[key] = !filterPanelsOpen[key]; chips(); }
+function mkCollapsibleGroup(el, grp, label, vals) {
+  var group = document.createElement('div'); group.className = 'chip-group';
+  var toggleBtn = document.createElement('button'); toggleBtn.className = 'chip-toggle';
+  var activeVal = fil[grp];
+  toggleBtn.textContent = label + (activeVal ? ': ' + (LABEL[activeVal] || activeVal) : '') + (filterPanelsOpen[grp] ? ' ▴' : ' ▾');
+  toggleBtn.onclick = function() { toggleFilterPanel(grp); };
+  group.appendChild(toggleBtn);
+  if (filterPanelsOpen[grp]) {
+    var row = document.createElement('div'); row.className = 'chip-row';
+    vals.forEach(function(v) {
+      var b = document.createElement('button'); b.className = 'chip';
+      if ((!fil[grp] && v === 'Alle') || fil[grp] === v) b.className += ' on';
+      b.textContent = LABEL[v] || v;
+      b.onclick = function() { fil[grp] = v === 'Alle' ? null : v; chips(); render(); };
+      row.appendChild(b);
+    });
+    group.appendChild(row);
+  }
+  el.appendChild(group);
+}
+function mkMoreFiltersGroup(el) {
+  var group = document.createElement('div'); group.className = 'chip-group';
+  var toggleBtn = document.createElement('button'); toggleBtn.className = 'chip-toggle';
+  var activeCount = (fil.status ? 1 : 0) + (fil.cur ? 1 : 0);
+  toggleBtn.textContent = 'Filter' + (activeCount ? ' (' + activeCount + ')' : '') + (filterPanelsOpen.more ? ' ▴' : ' ▾');
+  toggleBtn.onclick = function() { toggleFilterPanel('more'); };
+  group.appendChild(toggleBtn);
+  if (filterPanelsOpen.more) {
+    mkGroup(group, 'status', 'Status', ['Alle', 'aktiv', 'kandidat', 'bereit']);
+    mkGroup(group, 'cur', 'Material-Filter', ['Alle', 'fehlende_these', 'starke_personen', 'ungepruefte_quellen', 'formatbereit', 'buchreif']);
+  }
+  el.appendChild(group);
+}
 function chips() {
   var el = document.getElementById('chips'); el.innerHTML = '';
+  document.getElementById('person-sort').style.display = view === 'persons' ? '' : 'none';
   if (view === 'persons') {
-    mkGroup(el, 'status', 'Status', ['Alle', 'aktiv', 'kandidat', 'bereit']);
-    mkGroup(el, 'cur', 'Material', ['Alle', 'fehlende_these', 'starke_personen', 'ungepruefte_quellen', 'formatbereit', 'buchreif']);
-    mkGroup(el, 'format', 'Format', ['Alle'].concat(FORMAT_EIGNUNG));
+    document.getElementById('person-sort').value = personSort;
+    mkGroup(el, 'arbeitsstand', 'Arbeitsstand', ['Alle', 'ohne_material', 'dossier_offen', 'dossier_bereit', 'fit_offen']);
+    mkCollapsibleGroup(el, 'format', 'Format', ['Alle'].concat(FORMAT_EIGNUNG));
+    mkMoreFiltersGroup(el);
   }
   if (view === 'entries') {
     mkGroup(el, 'kat', 'Kategorie', ['Alle', 'Anekdote', 'Zitat', 'Fakt', 'Stil']);
@@ -848,17 +927,33 @@ function rPersons(main, s) {
     if (fil.status && p.status !== fil.status) return false;
     if (fil.format && arr(p.format_eignung).indexOf(fil.format) < 0) return false;
     if (fil.cur && !personMatchesCuration(p, fil.cur)) return false;
+    if (fil.arbeitsstand) {
+      var pe = personEntries(p);
+      if (fil.arbeitsstand === 'ohne_material' && pe.length > 0) return false;
+      if (fil.arbeitsstand === 'dossier_offen' && !(pe.length > 0 && dossierModel(p).count < 6)) return false;
+      if (fil.arbeitsstand === 'dossier_bereit' && dossierModel(p).count < 6) return false;
+      if (fil.arbeitsstand === 'fit_offen' && fitScore(candidateFor(p)) !== null) return false;
+    }
     return hit(p, s);
   });
+  data.sort(personSortComparator(personSort));
   document.getElementById('cnt').textContent = data.length + ' Personen';
   main.innerHTML = '';
   if (!data.length) {
     main.innerHTML = '<div class="empty"><div class="empty-ico">○</div>Keine Personen gefunden.</div>';
     return;
   }
+  var shown = data.slice(0, personRenderLimit);
   var grid = document.createElement('div'); grid.className = 'pgrid';
-  data.forEach(function(p) { grid.appendChild(mkPCard(p)); });
+  shown.forEach(function(p) { grid.appendChild(mkPCard(p)); });
   main.appendChild(grid);
+  if (data.length > shown.length) {
+    var moreWrap = document.createElement('div'); moreWrap.className = 'actions'; moreWrap.style.cssText = 'justify-content:center;margin-top:18px';
+    var moreBtn = document.createElement('button'); moreBtn.className = 'mini-btn'; moreBtn.textContent = 'Weitere Personen anzeigen (' + (data.length - shown.length) + ')';
+    moreBtn.onclick = function() { personRenderLimit += 30; render(); };
+    moreWrap.appendChild(moreBtn);
+    main.appendChild(moreWrap);
+  }
 }
 
 function mkPCard(p) {
@@ -867,14 +962,9 @@ function mkPCard(p) {
   var dm  = personDashboardModel(p);
   var dossier = dossierModel(p), candidate = candidateFor(p), fit = fitScore(candidate);
   var pillItems = [];
-  arr(p.format_eignung).slice(0, 2).forEach(function(t) { pillItems.push({ cls: 'pill pill-q', text: label(t) }); });
-  dm.gaps.slice(0, 2).forEach(function(g) { pillItems.push({ cls: 'pill pill-w', text: g }); });
-  (p.tags || []).forEach(function(t) { pillItems.push({ cls: 'pill', text: t }); });
-  var MAX_PILLS = 4;
-  var shownPills = pillItems.slice(0, MAX_PILLS);
-  var hiddenCount = pillItems.length - shownPills.length;
-  var tagsHtml = shownPills.map(function(item) { return '<span class="' + item.cls + '">' + esc(item.text) + '</span>'; }).join('') +
-    (hiddenCount > 0 ? '<span class="pill">+' + hiddenCount + '</span>' : '');
+  dm.gaps.slice(0, 2).forEach(function(g) { pillItems.push({ cls: 'pill pill-w', text: missingLabel(g) }); });
+  (p.tags || []).slice(0, 2).forEach(function(t) { pillItems.push({ cls: 'pill', text: t }); });
+  var tagsHtml = pillItems.map(function(item) { return '<span class="' + item.cls + '">' + esc(item.text) + '</span>'; }).join('');
   var c = document.createElement('div'); c.className = 'pc';
   c.setAttribute('role', 'button');
   c.tabIndex = 0;
@@ -2347,7 +2437,7 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault();
     document.getElementById('srch').focus();
   }
-  if (e.key === 'Escape' && view === 'profile') goTab('persons');
+  if (e.key === 'Escape' && view === 'profile') backToPersons();
 });
 
 // ── BIO FORMATTER ─────────────────────────────────
@@ -2474,6 +2564,34 @@ function runNextAction(p) {
   else if (a.key === 'research') setTimeout(moreResearch, 0);
 }
 function missingLabel(gap) { return 'Fehlt: ' + gap; }
+
+var PERSON_SORT_RANK = { review: 0, dossier: 1, fit: 2, page: 3, decide: 4, pilot: 5, research: 6, done: 7 };
+function personNextRank(p) {
+  var r = PERSON_SORT_RANK[nextActionForPerson(p).key];
+  return r === undefined ? 8 : r;
+}
+// persons has no updated_at column (only books/book_candidates/research_jobs
+// get that trigger) — the newest linked entry is the closest available proxy
+// for "zuletzt bearbeitet" without a schema change.
+function personLastActivity(p) {
+  var latest = p.created_at ? new Date(p.created_at).getTime() : 0;
+  personEntries(p).forEach(function(x) {
+    if (!x.created_at) return;
+    var t = new Date(x.created_at).getTime();
+    if (t > latest) latest = t;
+  });
+  return latest;
+}
+function personSortComparator(sortKey) {
+  return function(a, b) {
+    if (sortKey === 'name') return String(a.name).localeCompare(String(b.name), 'de');
+    if (sortKey === 'entries') return personEntries(b).length - personEntries(a).length;
+    if (sortKey === 'dossier') return dossierModel(b).count - dossierModel(a).count;
+    if (sortKey === 'updated') return personLastActivity(b) - personLastActivity(a);
+    var ra = personNextRank(a), rb = personNextRank(b);
+    return ra !== rb ? ra - rb : String(a.name).localeCompare(String(b.name), 'de');
+  };
+}
 
 function openSourceCount() {
   return entries.filter(entryUnchecked).length;

@@ -373,6 +373,30 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .heat-grid .pipe-label { font-size: 11px }
 .era-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--tx); margin-right: 6px; vertical-align: middle; opacity: .5 }
 
+/* ── BOOK PAGE LAYOUT EDITOR ── */
+.layout-page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px }
+.layout-page-card { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 10px; cursor: pointer; transition: border-color .12s, box-shadow .12s }
+.layout-page-card:hover { border-color: #bbb; box-shadow: var(--sh) }
+.layout-page-thumb { width: 160px; height: 226px; overflow: hidden; position: relative; background: #fff; border: 1px solid var(--br); border-radius: 4px; margin: 0 auto 10px }
+.layout-page-title { font-size: 13px; font-weight: 600 }
+.layout-page-meta { margin-bottom: 8px }
+.layout-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 10px 14px; margin-bottom: 12px }
+.layout-toolbar .actions { margin-left: auto }
+.layout-editor-wrap { display: flex; gap: 14px; align-items: flex-start }
+.page-canvas-scroll { overflow: auto; padding: 4px; max-width: 100% }
+.page-canvas { position: relative; background: #fff; border: 1px solid var(--br); box-shadow: var(--sh); flex-shrink: 0 }
+.page-block { position: absolute; border: 1px dashed transparent; cursor: move; overflow: hidden; padding: 4px; user-select: none }
+.page-block:hover { border-color: var(--br2) }
+.page-block.selected { border-color: var(--tx); border-style: solid }
+.block-image-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--bg2); color: var(--t3); font-size: 11px }
+.block-quote-mark { font-family: var(--serif); font-size: 32px; color: var(--br2); line-height: .6; margin-bottom: 4px }
+.block-resize { position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 50%, var(--t3) 50%) }
+.page-block:not(.selected) .block-resize { display: none }
+.layout-props { width: 260px; flex-shrink: 0; background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 14px 16px; position: sticky; top: 70px }
+.layout-image-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px }
+.layout-image-pick-item { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; border: 2px solid transparent; cursor: pointer }
+.layout-image-pick-item.selected { border-color: var(--gn) }
+
 @media (max-width: 640px) {
   body { padding-bottom: 58px; overflow-x: hidden }
   .hdr, .bar, .main { padding-left: 1rem; padding-right: 1rem }
@@ -407,6 +431,8 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   .review-row { grid-template-columns: 24px 1fr }
   .review-row .review-label { grid-column: 2 }
   .research-log-row { grid-template-columns: 1fr; gap: 2px }
+  .layout-editor-wrap { flex-direction: column }
+  .layout-props { width: 100%; position: static }
   .pilot-hero { padding: 23px 20px }
   .pilot-thesis { font-size: 15px }
   .pilot-board { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px }
@@ -436,6 +462,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   <button class="tab" data-tab="entries" onclick="goTab('entries')">Recherche</button>
   <button class="tab tab-more" data-tab="places" onclick="goTab('places')">Orte</button>
   <button class="tab tab-more" data-tab="kosten" onclick="goTab('kosten')">Kosten</button>
+  <button class="tab tab-more" data-tab="layout" onclick="goTab('layout')">Layout</button>
   <button class="tab tab-add" data-tab="add" onclick="openCapture()">+ Name</button>
   <div class="tab-sep" id="tab-sep"></div>
   <div class="back-btn" id="back-btn" onclick="goTab('persons')">
@@ -527,6 +554,10 @@ var LABEL = {
 };
 var profileEdit = false;
 var fitPanelExpanded = false;
+var bookPages = [];
+var layoutState = { view: 'list', page: null, selectedBlockId: null };
+var BLOCK_FONTS = { serif: "Georgia, 'Times New Roman', serif", sans: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" };
+var PAGE_W = 480, PAGE_H = 678; // ~A5-ish ratio at editing scale
 var enhanceState = { phase: 'idle', personName: '', data: null, error: '' };
 var TAG_THEME_RULES = {
   Arbeit: ['arbeit','werk','beruf','job','routine','schreibtisch','karriere','bankbeamter','atelier'],
@@ -572,10 +603,10 @@ function init() {
   Promise.all([
     supa('persons'), supa('entries'), supa('places'),
     supaOptional('books'), supaOptional('book_candidates'),
-    supaOptional('research_jobs'), supaOptional('ai_runs'), supaOptional('person_images')
+    supaOptional('research_jobs'), supaOptional('ai_runs'), supaOptional('person_images'), supaOptional('book_pages')
   ]).then(function(r) {
     persons = r[0]; entries = r[1]; places = r[2]; books = r[3];
-    bookCandidates = r[4]; researchJobs = r[5]; aiRuns = r[6]; personImages = r[7];
+    bookCandidates = r[4]; researchJobs = r[5]; aiRuns = r[6]; personImages = r[7]; bookPages = r[8];
     normalizeData();
     updateStats();
     goTab(requestedView || 'status');
@@ -626,7 +657,8 @@ function goTab(t) {
   });
   document.getElementById('back-btn').classList.remove('vis');
   document.getElementById('tab-sep').style.display = 'none';
-  document.getElementById('bar').style.display = (t === 'add' || t === 'status' || t === 'pilot' || t === 'kosten') ? 'none' : '';
+  document.getElementById('bar').style.display = (t === 'add' || t === 'status' || t === 'pilot' || t === 'kosten' || t === 'layout') ? 'none' : '';
+  layoutState.view = 'list'; layoutState.page = null; layoutState.selectedBlockId = null;
   document.getElementById('srch').value = '';
   window.scrollTo(0, 0);
   chips(); render();
@@ -699,6 +731,7 @@ function render() {
   else if (view === 'status')   rStatus(main);
   else if (view === 'pilot')    rPilot(main);
   else if (view === 'kosten')   rKosten(main);
+  else if (view === 'layout')   rLayout(main);
   else                          rPlaces(main, s);
 }
 
@@ -740,7 +773,7 @@ function mkPCard(p) {
   c.tabIndex = 0;
   c.innerHTML =
     '<div class="pc-top">' +
-      (p.image_url ? '<img class="pc-thumb" src="' + esc(p.image_url) + '" alt="">' : '') +
+      (p.image_url ? '<img class="pc-thumb" src="' + esc(p.image_url) + '" alt="" onerror="this.remove()">' : '') +
       '<div style="flex:1;min-width:0">' +
         '<div class="pc-name">' + esc(p.name) + '</div>' +
       '</div>' +
@@ -788,7 +821,7 @@ function rProfile(main) {
   var hd = document.createElement('div'); hd.className = 'profile-hd';
   hd.innerHTML =
     '<div class="profile-hd-top">' +
-      (p.image_url ? '<img class="profile-portrait" src="' + esc(p.image_url) + '" alt="">' : '') +
+      (p.image_url ? '<img class="profile-portrait" src="' + esc(p.image_url) + '" alt="" onerror="this.remove()">' : '') +
       '<div>' +
         '<div class="profile-name">' + esc(p.name) + '</div>' +
         (p.dates ? '<div class="profile-dates-line">' + esc(p.dates) + '</div>' : '') +
@@ -915,7 +948,7 @@ function galleryHtml(p) {
   var imgs = imagesForPerson(p);
   var grid = imgs.map(function(img) {
     return '<div class="gallery-item' + (img.is_cover ? ' is-cover' : '') + '" data-image-id="' + esc(img.id) + '">' +
-      '<img src="' + esc(img.url) + '" alt="">' +
+      '<img src="' + esc(img.url) + '" alt="" onerror="this.style.opacity=\'.25\'">' +
       '<div class="gallery-item-actions">' +
         (img.is_cover ? '<span class="gallery-cover-badge">Titelbild</span>' : '<button class="gallery-btn" onclick="setCoverImage(\'' + esc(img.id) + '\')">Als Titelbild</button>') +
         '<button class="gallery-btn gallery-btn-rm" onclick="removePersonImage(\'' + esc(img.id) + '\')" title="Entfernen" aria-label="Entfernen">✕</button>' +
@@ -3273,6 +3306,354 @@ function saveData() {
     btn.disabled = false; btn.textContent = 'Speichern';
     alert('Fehler beim Speichern: ' + err.message);
   });
+}
+
+// ── BOOK PAGE LAYOUT EDITOR ────────────────────────
+// Pages are stored as one JSONB blocks array (see migration) rather than a
+// normalized block table — a page is always loaded/edited/saved as one
+// unit, so this avoids an ORM layer for what is structurally just "this
+// page's current draft". Blocks are freely positioned/resized (drag via
+// pointer events, works for touch too) and can pull their text straight
+// from an existing entry or their image from the person's gallery, so the
+// editor stays wired to the same curated data instead of being a blank
+// canvas.
+var BLOCK_TYPE_LABELS = { text: 'Textfeld', quote: 'Zitat', heading: 'Überschrift', image: 'Bild' };
+var THUMB_SCALE = 160 / PAGE_W;
+
+function pagesForBook() {
+  var book = activeBook();
+  return bookPages.filter(function(pg) { return !book || String(pg.book_id) === String(book.id); })
+    .sort(function(a, b) { return (a.page_order || 0) - (b.page_order || 0); });
+}
+
+function currentBlock(id) {
+  var pg = layoutState.page;
+  return pg && (pg.blocks || []).find(function(b) { return b.id === id; });
+}
+
+function newBlock(type, idx) {
+  var offset = ((idx || 0) % 5) * 16;
+  return {
+    id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: type,
+    x: 30 + offset, y: 30 + offset,
+    w: type === 'image' ? 200 : 260,
+    h: type === 'image' ? 200 : (type === 'heading' ? 56 : 110),
+    z: (idx || 0) + 1,
+    content: type === 'heading' ? 'Überschrift' : (type === 'quote' ? 'Zitattext…' : (type === 'text' ? 'Text…' : '')),
+    entryId: null,
+    style: {
+      fontFamily: (type === 'quote' || type === 'heading') ? 'serif' : 'sans',
+      fontSize: type === 'heading' ? 26 : (type === 'quote' ? 16 : 12),
+      align: 'left', color: '#141414',
+      fontStyle: type === 'quote' ? 'italic' : 'normal',
+      fontWeight: type === 'heading' ? '700' : '400'
+    }
+  };
+}
+
+function blockContentHtml(block) {
+  var st = block.style || {};
+  if (block.type === 'image') {
+    return block.content
+      ? '<img src="' + esc(block.content) + '" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.opacity=\'.2\'">'
+      : '<div class="block-image-empty">Bild wählen →</div>';
+  }
+  var styleStr = 'font-family:' + (BLOCK_FONTS[st.fontFamily] || BLOCK_FONTS.sans) + ';font-size:' + (st.fontSize || 14) +
+    'px;text-align:' + (st.align || 'left') + ';color:' + (st.color || '#141414') + ';font-style:' + (st.fontStyle || 'normal') +
+    ';font-weight:' + (st.fontWeight || '400') + ';line-height:1.4;white-space:pre-wrap;overflow-wrap:break-word';
+  var mark = block.type === 'quote' ? '<div class="block-quote-mark">"</div>' : '';
+  return mark + '<div style="' + styleStr + '">' + esc(block.content || '') + '</div>';
+}
+
+function pageThumbHtml(pg) {
+  var blocks = (pg.blocks || []).map(function(b) {
+    return '<div style="position:absolute;left:' + b.x + 'px;top:' + b.y + 'px;width:' + b.w + 'px;height:' + b.h + 'px;overflow:hidden">' + blockContentHtml(b) + '</div>';
+  }).join('');
+  return '<div style="position:absolute;left:0;top:0;width:' + PAGE_W + 'px;height:' + PAGE_H + 'px;transform:scale(' + THUMB_SCALE + ');transform-origin:top left;background:#fff">' + blocks + '</div>';
+}
+
+function rLayout(main) {
+  main.innerHTML = '';
+  if (tableAvailability.book_pages === false) {
+    main.innerHTML = '<div class="empty"><div class="empty-ico">○</div>Layout-Editor ist vorbereitet. Bitte zuerst die neue Datenbankmigration anwenden.</div>';
+    return;
+  }
+  if (layoutState.view === 'editor' && layoutState.page) { renderPageEditorView(main); return; }
+  renderLayoutList(main);
+}
+
+function renderLayoutList(main) {
+  var pages = pagesForBook();
+  var html = '<div class="dash-hero">' +
+    '<div class="dash-title">Buchseiten</div>' +
+    '<div class="dash-copy">Layout, Bild- und Textplatzierung pro Seite — frei verschiebbar, direkt aus Personenpool und Recherche befüllt.</div>' +
+    '<div class="actions" style="margin-top:14px">' +
+      '<select id="layout-new-person" class="ai ai-sel" style="width:auto;display:inline-block">' + personOptions(null) + '</select>' +
+      '<button class="mini-btn primary" onclick="createNewPage()">+ Neue Seite</button>' +
+    '</div>' +
+  '</div>';
+
+  if (!pages.length) {
+    html += '<div class="empty"><div class="empty-ico">▤</div>Noch keine Seiten angelegt.</div>';
+  } else {
+    html += '<div class="layout-page-grid">' + pages.map(function(pg) {
+      var p = pg.person_id ? personById(pg.person_id) : null;
+      var blockCount = (pg.blocks || []).length;
+      return '<div class="layout-page-card" onclick="openPageEditor(\'' + esc(pg.id) + '\')">' +
+        '<div class="layout-page-thumb">' + pageThumbHtml(pg) + '</div>' +
+        '<div class="layout-page-meta">' +
+          '<div class="layout-page-title">' + esc(pg.title || 'Ohne Titel') + '</div>' +
+          '<div class="readonly-note">' + (p ? esc(p.name) : 'Keine Person') + ' · ' + blockCount + ' Element' + (blockCount === 1 ? '' : 'e') + '</div>' +
+        '</div>' +
+        '<button class="mini-btn danger" onclick="event.stopPropagation();deletePage(\'' + esc(pg.id) + '\')">Löschen</button>' +
+      '</div>';
+    }).join('') + '</div>';
+  }
+  main.innerHTML = html;
+}
+
+function createNewPage() {
+  var book = activeBook();
+  var personSelect = document.getElementById('layout-new-person');
+  var personId = personSelect ? personSelect.value : '';
+  var p = personId ? personById(personId) : null;
+  var order = pagesForBook().length;
+  insertSupa('book_pages', {
+    book_id: book ? book.id : null, person_id: personId || null,
+    title: p ? p.name : 'Neue Seite', page_order: order, blocks: []
+  }).then(function(saved) {
+    bookPages.push(saved);
+    openPageEditor(saved.id);
+  }).catch(function(err) { alert('Seite konnte nicht angelegt werden: ' + err.message); });
+}
+
+function openPageEditor(id) {
+  var pg = bookPages.find(function(x) { return String(x.id) === String(id); });
+  if (!pg) return;
+  pg.blocks = Array.isArray(pg.blocks) ? pg.blocks : [];
+  layoutState.view = 'editor'; layoutState.page = pg; layoutState.selectedBlockId = null;
+  render();
+}
+
+function backToPageList() {
+  layoutState.view = 'list'; layoutState.page = null; layoutState.selectedBlockId = null;
+  render();
+}
+
+function renamePage(title) {
+  var pg = layoutState.page; if (!pg) return;
+  pg.title = title;
+  patchSupa('book_pages', pg, { title: title }).then(function(saved) { Object.assign(pg, saved || {}); })
+    .catch(function(err) { console.warn('Titel konnte nicht gespeichert werden:', err.message); });
+}
+
+function deletePage(id) {
+  if (!confirm('Diese Seite wirklich löschen?')) return;
+  var pg = bookPages.find(function(x) { return String(x.id) === String(id); });
+  if (!pg) return;
+  fetch(SB + '/rest/v1/book_pages?' + matchQuery('book_pages', pg), { method: 'DELETE', headers: supaHeaders('return=minimal') }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error(parseSupaErr(t)); });
+    bookPages = bookPages.filter(function(x) { return x.id !== pg.id; });
+    render();
+  }).catch(function(err) { alert('Seite konnte nicht gelöscht werden: ' + err.message); });
+}
+
+function savePageBlocks() {
+  var pg = layoutState.page; if (!pg) return;
+  patchSupa('book_pages', pg, { blocks: pg.blocks }).then(function(saved) {
+    Object.assign(pg, saved || {});
+    var idx = bookPages.findIndex(function(x) { return x.id === pg.id; });
+    if (idx >= 0) bookPages[idx] = pg;
+  }).catch(function(err) { console.warn('Seite konnte nicht gespeichert werden:', err.message); });
+}
+
+function renderPageEditorView(main) {
+  var pg = layoutState.page;
+  var wrap = document.createElement('div');
+  wrap.innerHTML =
+    '<div class="layout-toolbar">' +
+      '<button class="mini-btn" onclick="backToPageList()">← Seiten</button>' +
+      '<input id="layout-page-title" class="ai" style="width:220px" value="' + esc(pg.title || '') + '" onchange="renamePage(this.value)">' +
+      '<div class="actions">' +
+        '<button class="mini-btn" onclick="addBlock(\'heading\')">+ Überschrift</button>' +
+        '<button class="mini-btn" onclick="addBlock(\'text\')">+ Text</button>' +
+        '<button class="mini-btn" onclick="addBlock(\'quote\')">+ Zitat</button>' +
+        '<button class="mini-btn" onclick="addBlock(\'image\')">+ Bild</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="layout-editor-wrap">' +
+      '<div class="page-canvas-scroll"><div class="page-canvas" id="page-canvas" style="width:' + PAGE_W + 'px;height:' + PAGE_H + 'px"></div></div>' +
+      '<div class="layout-props" id="layout-props"></div>' +
+    '</div>';
+  main.innerHTML = '';
+  main.appendChild(wrap);
+
+  var canvas = document.getElementById('page-canvas');
+  canvas.onpointerdown = function(e) { if (e.target === canvas) deselectBlock(); };
+  (pg.blocks || []).forEach(function(block) { canvas.appendChild(mkBlockEl(block)); });
+  renderPropsPanel();
+}
+
+function mkBlockEl(block) {
+  var el = document.createElement('div');
+  el.className = 'page-block' + (layoutState.selectedBlockId === block.id ? ' selected' : '');
+  el.id = 'block-' + block.id;
+  el.style.left = block.x + 'px'; el.style.top = block.y + 'px';
+  el.style.width = block.w + 'px'; el.style.height = block.h + 'px';
+  el.style.zIndex = block.z || 1;
+  el.style.touchAction = 'none';
+  el.innerHTML = blockContentHtml(block);
+  var handle = document.createElement('div');
+  handle.className = 'block-resize';
+  handle.onpointerdown = function(e) { startResizeBlock(e, block.id); };
+  el.appendChild(handle);
+  el.onpointerdown = function(e) {
+    if (e.target === handle) return;
+    selectBlock(block.id);
+    startDragBlock(e, block.id);
+  };
+  return el;
+}
+
+function deselectBlock() {
+  layoutState.selectedBlockId = null;
+  document.querySelectorAll('.page-block.selected').forEach(function(el) { el.classList.remove('selected'); });
+  renderPropsPanel();
+}
+
+function selectBlock(id) {
+  layoutState.selectedBlockId = id;
+  document.querySelectorAll('.page-block').forEach(function(el) { el.classList.toggle('selected', el.id === 'block-' + id); });
+  renderPropsPanel();
+}
+
+function startDragBlock(e, id) {
+  e.preventDefault();
+  var block = currentBlock(id); if (!block) return;
+  var startX = e.clientX, startY = e.clientY, origX = block.x, origY = block.y, moved = false;
+  var el = document.getElementById('block-' + id);
+  function onMove(ev) {
+    moved = true;
+    block.x = Math.max(0, Math.min(PAGE_W - block.w, origX + (ev.clientX - startX)));
+    block.y = Math.max(0, Math.min(PAGE_H - block.h, origY + (ev.clientY - startY)));
+    el.style.left = block.x + 'px'; el.style.top = block.y + 'px';
+  }
+  function onUp() {
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    if (moved) savePageBlocks();
+  }
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+}
+
+function startResizeBlock(e, id) {
+  e.preventDefault(); e.stopPropagation();
+  var block = currentBlock(id); if (!block) return;
+  selectBlock(id);
+  var startX = e.clientX, startY = e.clientY, origW = block.w, origH = block.h;
+  var el = document.getElementById('block-' + id);
+  function onMove(ev) {
+    block.w = Math.max(40, Math.min(PAGE_W - block.x, origW + (ev.clientX - startX)));
+    block.h = Math.max(24, Math.min(PAGE_H - block.y, origH + (ev.clientY - startY)));
+    el.style.width = block.w + 'px'; el.style.height = block.h + 'px';
+  }
+  function onUp() {
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    savePageBlocks();
+  }
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+}
+
+function addBlock(type) {
+  var pg = layoutState.page; if (!pg) return;
+  pg.blocks = pg.blocks || [];
+  var block = newBlock(type, pg.blocks.length);
+  pg.blocks.push(block);
+  layoutState.selectedBlockId = block.id;
+  renderPageEditorView(document.getElementById('main'));
+  savePageBlocks();
+}
+
+function deleteBlock() {
+  var pg = layoutState.page; if (!pg || !layoutState.selectedBlockId) return;
+  pg.blocks = (pg.blocks || []).filter(function(b) { return b.id !== layoutState.selectedBlockId; });
+  layoutState.selectedBlockId = null;
+  renderPageEditorView(document.getElementById('main'));
+  savePageBlocks();
+}
+
+function setBlockContent(value) {
+  var block = currentBlock(layoutState.selectedBlockId); if (!block) return;
+  block.content = value; block.entryId = null;
+  savePageBlocks();
+}
+
+function pickEntryForBlock(entryId) {
+  var block = currentBlock(layoutState.selectedBlockId); if (!block || !entryId) return;
+  var x = entries.find(function(e) { return String(e.id) === String(entryId); }); if (!x) return;
+  block.content = entryText(x) || x.preview || '';
+  block.entryId = entryId;
+  renderPageEditorView(document.getElementById('main'));
+  savePageBlocks();
+}
+
+function setBlockImage(url) {
+  var block = currentBlock(layoutState.selectedBlockId); if (!block) return;
+  block.content = normalizeUrl(url);
+  renderPageEditorView(document.getElementById('main'));
+  savePageBlocks();
+}
+
+function setBlockStyle(key, value) {
+  var block = currentBlock(layoutState.selectedBlockId); if (!block) return;
+  block.style = block.style || {};
+  block.style[key] = value;
+  renderPageEditorView(document.getElementById('main'));
+  savePageBlocks();
+}
+
+function renderPropsPanel() {
+  var panel = document.getElementById('layout-props'); if (!panel) return;
+  var block = layoutState.selectedBlockId ? currentBlock(layoutState.selectedBlockId) : null;
+  if (!block) { panel.innerHTML = '<div class="readonly-note">Element auswählen, um Eigenschaften zu bearbeiten.</div>'; return; }
+  var st = block.style || {};
+  var html = '<div class="dash-card-title" style="margin-bottom:10px">' + esc(BLOCK_TYPE_LABELS[block.type] || block.type) + '</div>';
+
+  if (block.type === 'image') {
+    var p = layoutState.page.person_id ? personById(layoutState.page.person_id) : null;
+    var imgs = p ? imagesForPerson(p) : [];
+    html += '<div class="add-fld"><label class="add-lbl">Aus Galerie wählen</label>' +
+      (imgs.length ? '<div class="layout-image-pick">' + imgs.map(function(img) {
+        return '<img src="' + esc(img.url) + '" class="layout-image-pick-item' + (img.url === block.content ? ' selected' : '') + '" onclick="setBlockImage(\'' + esc(img.url) + '\')" onerror="this.style.display=\'none\'">';
+      }).join('') + '</div>' : '<div class="readonly-note">Keine Bilder im Profil dieser Person.</div>') +
+    '</div>' +
+    '<div class="add-fld"><label class="add-lbl">Oder URL</label><input class="ai" value="' + esc(block.content || '') + '" onchange="setBlockImage(this.value)"></div>';
+  } else {
+    html += '<div class="add-fld"><label class="add-lbl">Inhalt</label><textarea class="ai ai-ta" rows="4" onchange="setBlockContent(this.value)">' + esc(block.content || '') + '</textarea></div>';
+    if (layoutState.page.person_id) {
+      var pEntries = personEntries(personById(layoutState.page.person_id));
+      html += '<div class="add-fld"><label class="add-lbl">Aus Eintrag übernehmen</label><select class="ai ai-sel" onchange="pickEntryForBlock(this.value)"><option value="">— frei —</option>' +
+        pEntries.map(function(x) {
+          return '<option value="' + esc(x.id) + '"' + (block.entryId === x.id ? ' selected' : '') + '>' + esc((x.kategorie || '') + ': ' + (entryText(x) || x.preview || '').slice(0, 46)) + '</option>';
+        }).join('') + '</select></div>';
+    }
+    html += '<div class="form-grid">' +
+      '<div class="add-fld"><label class="add-lbl">Schrift</label><select class="ai ai-sel" onchange="setBlockStyle(\'fontFamily\', this.value)">' + opts(['serif', 'sans'], st.fontFamily || 'sans') + '</select></div>' +
+      '<div class="add-fld"><label class="add-lbl">Größe</label><input type="number" class="ai" value="' + (st.fontSize || 14) + '" min="8" max="72" onchange="setBlockStyle(\'fontSize\', Number(this.value))"></div>' +
+      '<div class="add-fld"><label class="add-lbl">Ausrichtung</label><select class="ai ai-sel" onchange="setBlockStyle(\'align\', this.value)">' + opts(['left', 'center', 'right'], st.align || 'left') + '</select></div>' +
+      '<div class="add-fld"><label class="add-lbl">Farbe</label><input type="color" class="ai" value="' + (st.color || '#141414') + '" onchange="setBlockStyle(\'color\', this.value)"></div>' +
+    '</div>' +
+    '<div class="actions">' +
+      '<label class="checkchip"><input type="checkbox" ' + (st.fontStyle === 'italic' ? 'checked' : '') + ' onchange="setBlockStyle(\'fontStyle\', this.checked ? \'italic\' : \'normal\')"> Kursiv</label>' +
+      '<label class="checkchip"><input type="checkbox" ' + (st.fontWeight === '700' ? 'checked' : '') + ' onchange="setBlockStyle(\'fontWeight\', this.checked ? \'700\' : \'400\')"> Fett</label>' +
+    '</div>';
+  }
+  html += '<div class="actions" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--br)"><button class="mini-btn danger" onclick="deleteBlock()">Element löschen</button></div>';
+  panel.innerHTML = html;
 }
 
 init();

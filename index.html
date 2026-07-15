@@ -128,6 +128,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 /* ── EDIT / CURATION CONTROLS ── */
 .mini-btn { background: transparent; color: var(--t2); border: 1px solid var(--br2); padding: 6px 11px; border-radius: 6px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: all .15s; font-weight: 600 }
 .mini-btn:hover { border-color: #999; color: var(--tx); background: var(--wh) }
+.mini-btn:disabled { opacity: .35; cursor: default; background: transparent; border-color: var(--br) }
 .mini-btn.primary { background: var(--tx); color: var(--bg); border-color: var(--tx) }
 .mini-btn.danger { color: #c0392b; border-color: #e0b0aa }
 .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
@@ -374,28 +375,86 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .era-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--tx); margin-right: 6px; vertical-align: middle; opacity: .5 }
 
 /* ── BOOK PAGE LAYOUT EDITOR ── */
-.layout-page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px }
-.layout-page-card { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 10px; cursor: pointer; transition: border-color .12s, box-shadow .12s }
-.layout-page-card:hover { border-color: #bbb; box-shadow: var(--sh) }
-.layout-page-thumb { width: 160px; height: 226px; overflow: hidden; position: relative; background: #fff; border: 1px solid var(--br); border-radius: 4px; margin: 0 auto 10px }
-.layout-page-title { font-size: 13px; font-weight: 600 }
-.layout-page-meta { margin-bottom: 8px }
-.layout-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 10px 14px; margin-bottom: 12px }
-.layout-toolbar .actions { margin-left: auto }
-.layout-editor-wrap { display: flex; gap: 14px; align-items: flex-start }
-.page-canvas-scroll { overflow: auto; padding: 4px; max-width: 100% }
-.page-canvas { position: relative; background: #fff; border: 1px solid var(--br); box-shadow: var(--sh); flex-shrink: 0 }
-.page-block { position: absolute; border: 1px dashed transparent; cursor: move; overflow: hidden; padding: 4px; user-select: none }
-.page-block:hover { border-color: var(--br2) }
-.page-block.selected { border-color: var(--tx); border-style: solid }
+.layout-overview-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 18px }
+.layout-overview-copy { max-width: 620px }
+.layout-overview-title { font-family: var(--serif); font-size: 30px; font-weight: 400; letter-spacing: -.025em; line-height: 1.1 }
+.layout-overview-sub { color: var(--t2); font-size: 13px; line-height: 1.65; margin-top: 7px }
+.layout-overview-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end }
+.layout-overview-actions .ai { min-width: 220px }
+.layout-summary { display: flex; gap: 20px; padding: 11px 0 14px; margin-bottom: 16px; border-top: 1px solid var(--br); border-bottom: 1px solid var(--br) }
+.layout-summary-item { display: flex; align-items: baseline; gap: 6px; color: var(--t3); font-size: 11px }
+.layout-summary-item strong { color: var(--tx); font-family: var(--serif); font-size: 19px; font-weight: 400 }
+.layout-page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px }
+.layout-page-card { position: relative; background: var(--wh); border: 1px solid var(--br); border-radius: 10px; padding: 12px; transition: border-color .15s, box-shadow .15s, transform .15s }
+.layout-page-card:hover { border-color: #b9b3ab; box-shadow: 0 8px 24px rgba(35,29,22,.08); transform: translateY(-2px) }
+.layout-card-open { display: block; width: 100%; color: inherit; text-align: left; background: transparent; border: 0; font-family: inherit; cursor: pointer }
+.layout-page-thumb { width: 178px; height: 252px; overflow: hidden; position: relative; background: #fff; border: 1px solid #d8d2ca; box-shadow: 0 3px 14px rgba(35,29,22,.08); border-radius: 2px; margin: 0 auto 12px }
+.layout-page-number { position: absolute; top: 8px; left: 8px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 7px; border-radius: 20px; background: rgba(20,20,20,.86); color: #fff; font-size: 9px; letter-spacing: .08em }
+.layout-page-title { font-family: var(--serif); font-size: 16px; font-weight: 400; line-height: 1.25 }
+.layout-page-meta { min-height: 52px }
+.layout-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--br); margin-top: 9px; padding-top: 9px }
+.layout-card-hint { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: .08em }
+.layout-toolbar { position: sticky; top: 0; z-index: 40; display: grid; grid-template-columns: minmax(250px, 1fr) auto; align-items: center; gap: 12px; background: rgba(255,255,255,.96); backdrop-filter: blur(12px); border: 1px solid var(--br); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; box-shadow: 0 5px 18px rgba(35,29,22,.06) }
+.layout-toolbar-main, .layout-toolbar-tools { display: flex; align-items: center; gap: 8px; min-width: 0 }
+.layout-toolbar-tools { justify-content: flex-end; flex-wrap: wrap }
+.layout-title-input { width: min(260px, 42vw); border: 0; border-left: 1px solid var(--br); border-radius: 0; background: transparent; font-family: var(--serif); font-size: 17px; padding: 6px 10px }
+.layout-title-input:focus { background: var(--bg); border-left-color: var(--br) }
+.layout-save-state { display: inline-flex; align-items: center; gap: 6px; color: var(--t3); font-size: 10px; white-space: nowrap; letter-spacing: .04em }
+.layout-save-state::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--gn) }
+.layout-save-state.saving::before { background: var(--am) }
+.layout-save-state.error { color: #a33124 }
+.layout-save-state.error::before { background: #a33124 }
+.layout-editor-wrap { display: grid; grid-template-columns: 150px minmax(500px, 1fr) 280px; gap: 12px; align-items: start }
+.layout-page-rail { position: sticky; top: 76px; background: var(--wh); border: 1px solid var(--br); border-radius: 10px; padding: 10px }
+.layout-rail-title { font-size: 9px; letter-spacing: .13em; text-transform: uppercase; color: var(--t3); font-weight: 700; margin-bottom: 8px }
+.layout-rail-list { display: grid; gap: 6px; max-height: 680px; overflow: auto }
+.layout-rail-item { display: grid; grid-template-columns: 22px 1fr; gap: 7px; align-items: center; width: 100%; border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 7px; color: var(--t2); text-align: left; font-family: inherit; cursor: pointer }
+.layout-rail-item:hover { background: var(--bg); color: var(--tx) }
+.layout-rail-item.on { background: var(--tx); color: #fff }
+.layout-rail-num { font-family: var(--serif); font-size: 15px; line-height: 1 }
+.layout-rail-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px }
+.page-stage { min-height: 706px; display: flex; justify-content: center; padding: 14px; border: 1px solid #ded8d0; border-radius: 10px; background-color: #eae6df; background-image: radial-gradient(#cfc8be 0.65px, transparent 0.65px); background-size: 12px 12px }
+.page-canvas-scroll { overflow: auto; max-width: 100%; padding: 0 5px 10px }
+.page-canvas-shell { position: relative; width: 480px; margin: 0 auto }
+.page-canvas { position: relative; background: #fff; border: 1px solid #d5cec4; box-shadow: 0 12px 35px rgba(35,29,22,.14); flex-shrink: 0 }
+.page-canvas::before { content: ''; position: absolute; inset: 28px; border: 1px dashed rgba(154,114,0,.18); pointer-events: none; z-index: 0 }
+.page-canvas::after { content: attr(data-page); position: absolute; bottom: 11px; left: 0; right: 0; text-align: center; color: #aaa39a; font-family: var(--serif); font-size: 10px; pointer-events: none }
+.page-block { position: absolute; border: 1px dashed transparent; cursor: move; overflow: hidden; padding: 4px; user-select: none; z-index: 1 }
+.page-block:hover { border-color: #aaa39a; background: rgba(247,245,241,.2) }
+.page-block.selected { border-color: #9a7200; border-style: solid; box-shadow: 0 0 0 2px rgba(154,114,0,.12) }
+.page-block.selected::before { content: attr(data-label); position: absolute; top: 0; left: 0; z-index: 2; padding: 2px 5px; background: #9a7200; color: #fff; font-size: 8px; line-height: 1.2; letter-spacing: .08em; text-transform: uppercase; pointer-events: none }
 .block-image-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--bg2); color: var(--t3); font-size: 11px }
 .block-quote-mark { font-family: var(--serif); font-size: 32px; color: var(--br2); line-height: .6; margin-bottom: 4px }
 .block-resize { position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 50%, var(--t3) 50%) }
 .page-block:not(.selected) .block-resize { display: none }
-.layout-props { width: 260px; flex-shrink: 0; background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 14px 16px; position: sticky; top: 70px }
+.layout-props { min-width: 0; background: var(--wh); border: 1px solid var(--br); border-radius: 10px; padding: 15px 16px; position: sticky; top: 76px }
+.layout-props-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--br) }
+.layout-props-title { font-family: var(--serif); font-size: 17px }
+.layout-props-kicker { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--t3) }
+.layout-empty-inspector { color: var(--t2); font-size: 12px; line-height: 1.6 }
+.layout-empty-inspector strong { display: block; color: var(--tx); font-family: var(--serif); font-size: 17px; font-weight: 400; margin-bottom: 5px }
+.layout-template-grid { display: grid; gap: 6px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--br) }
+.layout-template-btn { width: 100%; border: 1px solid var(--br); background: var(--bg); border-radius: 6px; padding: 9px 10px; font-family: inherit; color: var(--t2); text-align: left; cursor: pointer }
+.layout-template-btn:hover { border-color: var(--br2); background: var(--wh); color: var(--tx) }
+.layout-template-btn strong { display: block; color: inherit; font-size: 11px; font-family: var(--sans); font-weight: 700; margin: 0 }
+.layout-template-btn span { display: block; color: var(--t3); font-size: 10px; margin-top: 2px }
 .layout-image-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px }
 .layout-image-pick-item { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; border: 2px solid transparent; cursor: pointer }
 .layout-image-pick-item.selected { border-color: var(--gn) }
+
+@media (max-width: 1040px) {
+  .layout-editor-wrap { grid-template-columns: minmax(500px, 1fr) 270px }
+  .layout-page-rail { display: none }
+}
+
+@media (max-width: 840px) {
+  .layout-toolbar { position: static; grid-template-columns: 1fr }
+  .layout-toolbar-tools { justify-content: flex-start }
+  .layout-editor-wrap { display: flex; flex-direction: column }
+  .page-stage { width: 100%; min-height: 0 }
+  .page-canvas-scroll { width: 100% }
+  .layout-props { width: 100%; position: static }
+}
 
 @media (max-width: 640px) {
   body { padding-bottom: 58px; overflow-x: hidden }
@@ -405,7 +464,8 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   .hstat-n { font-size: 22px }
   .tabs { padding: 0; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; box-shadow: 0 -3px 12px rgba(0,0,0,.16) }
   .tabs-in { justify-content: space-around; overflow: visible }
-  .tab { min-width: 0; flex: 1; padding: 12px 4px 10px; font-size: 8px; min-height: 52px; letter-spacing: .04em }
+  .tab { min-width: 0; flex: 1; padding: 12px 3px 10px; font-size: 0; min-height: 52px; overflow: hidden }
+  .tab::after { content: attr(data-short); display: block; font-size: 8px; letter-spacing: .04em; white-space: nowrap }
   .tab-more { display: none }
   .tab-add { margin-left: 0; color: #fff }
   /* The back button duplicates the highlighted "Personenpool" tab's own
@@ -431,7 +491,19 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   .review-row { grid-template-columns: 24px 1fr }
   .review-row .review-label { grid-column: 2 }
   .research-log-row { grid-template-columns: 1fr; gap: 2px }
-  .layout-editor-wrap { flex-direction: column }
+  .layout-overview-head { align-items: flex-start; flex-direction: column }
+  .layout-overview-actions { width: 100%; justify-content: flex-start }
+  .layout-overview-actions .ai { flex: 1; min-width: 170px }
+  .layout-page-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+  .layout-page-card { padding: 8px }
+  .layout-page-thumb { width: 132px; height: 187px }
+  .layout-thumb-inner { transform: scale(.275) !important }
+  .layout-toolbar { position: static; grid-template-columns: 1fr; }
+  .layout-toolbar-tools { justify-content: flex-start }
+  .layout-title-input { width: 100%; max-width: none }
+  .layout-editor-wrap { display: flex; flex-direction: column }
+  .page-stage { min-height: 0; width: 100%; justify-content: flex-start; padding: 8px }
+  .page-canvas-scroll { width: 100% }
   .layout-props { width: 100%; position: static }
   .pilot-hero { padding: 23px 20px }
   .pilot-thesis { font-size: 15px }
@@ -456,14 +528,14 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 </div></div>
 
 <nav class="tabs" aria-label="Hauptnavigation"><div class="tabs-in">
-  <button class="tab on" data-tab="status" onclick="goTab('status')">Arbeitsplatz</button>
-  <button class="tab" data-tab="pilot" onclick="goTab('pilot')">Pilotband</button>
-  <button class="tab" data-tab="persons" onclick="goTab('persons')">Personenpool</button>
-  <button class="tab" data-tab="entries" onclick="goTab('entries')">Recherche</button>
-  <button class="tab tab-more" data-tab="places" onclick="goTab('places')">Orte</button>
-  <button class="tab tab-more" data-tab="kosten" onclick="goTab('kosten')">Kosten</button>
-  <button class="tab tab-more" data-tab="layout" onclick="goTab('layout')">Layout</button>
-  <button class="tab tab-add" data-tab="add" onclick="openCapture()">+ Name</button>
+  <button class="tab on" data-tab="status" data-short="Start" aria-label="Arbeitsplatz" onclick="goTab('status')">Arbeitsplatz</button>
+  <button class="tab" data-tab="pilot" data-short="Pilot" aria-label="Pilotband" onclick="goTab('pilot')">Pilotband</button>
+  <button class="tab" data-tab="persons" data-short="Pool" aria-label="Personenpool" onclick="goTab('persons')">Personenpool</button>
+  <button class="tab" data-tab="entries" data-short="Recherche" aria-label="Recherche" onclick="goTab('entries')">Recherche</button>
+  <button class="tab tab-more" data-tab="places" data-short="Orte" aria-label="Orte" onclick="goTab('places')">Orte</button>
+  <button class="tab tab-more" data-tab="kosten" data-short="Kosten" aria-label="Kosten" onclick="goTab('kosten')">Kosten</button>
+  <button class="tab" data-tab="layout" data-short="Seiten" aria-label="Seiten" onclick="goTab('layout')">Seiten</button>
+  <button class="tab tab-add" data-tab="add" data-short="+ Name" aria-label="+ Name" onclick="openCapture()">+ Name</button>
   <div class="tab-sep" id="tab-sep"></div>
   <div class="back-btn" id="back-btn" onclick="goTab('persons')">
     <span class="back-arrow">←</span> Zurück zur Übersicht
@@ -555,7 +627,7 @@ var LABEL = {
 var profileEdit = false;
 var fitPanelExpanded = false;
 var bookPages = [];
-var layoutState = { view: 'list', page: null, selectedBlockId: null };
+var layoutState = { view: 'list', page: null, selectedBlockId: null, saveStatus: 'saved' };
 var BLOCK_FONTS = { serif: "Georgia, 'Times New Roman', serif", sans: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" };
 var PAGE_W = 480, PAGE_H = 678; // ~A5-ish ratio at editing scale
 var enhanceState = { phase: 'idle', personName: '', data: null, error: '' };
@@ -3318,7 +3390,7 @@ function saveData() {
 // editor stays wired to the same curated data instead of being a blank
 // canvas.
 var BLOCK_TYPE_LABELS = { text: 'Textfeld', quote: 'Zitat', heading: 'Überschrift', image: 'Bild' };
-var THUMB_SCALE = 160 / PAGE_W;
+var THUMB_SCALE = 178 / PAGE_W;
 
 function pagesForBook() {
   var book = activeBook();
@@ -3370,7 +3442,7 @@ function pageThumbHtml(pg) {
   var blocks = (pg.blocks || []).map(function(b) {
     return '<div style="position:absolute;left:' + b.x + 'px;top:' + b.y + 'px;width:' + b.w + 'px;height:' + b.h + 'px;overflow:hidden">' + blockContentHtml(b) + '</div>';
   }).join('');
-  return '<div style="position:absolute;left:0;top:0;width:' + PAGE_W + 'px;height:' + PAGE_H + 'px;transform:scale(' + THUMB_SCALE + ');transform-origin:top left;background:#fff">' + blocks + '</div>';
+  return '<div class="layout-thumb-inner" style="position:absolute;left:0;top:0;width:' + PAGE_W + 'px;height:' + PAGE_H + 'px;transform:scale(' + THUMB_SCALE + ');transform-origin:top left;background:#fff">' + blocks + '</div>';
 }
 
 function rLayout(main) {
@@ -3385,29 +3457,40 @@ function rLayout(main) {
 
 function renderLayoutList(main) {
   var pages = pagesForBook();
-  var html = '<div class="dash-hero">' +
-    '<div class="dash-title">Buchseiten</div>' +
-    '<div class="dash-copy">Layout, Bild- und Textplatzierung pro Seite — frei verschiebbar, direkt aus Personenpool und Recherche befüllt.</div>' +
-    '<div class="actions" style="margin-top:14px">' +
-      '<select id="layout-new-person" class="ai ai-sel" style="width:auto;display:inline-block">' + personOptions(null) + '</select>' +
+  var elements = pages.reduce(function(total, pg) { return total + (pg.blocks || []).length; }, 0);
+  var linked = pages.filter(function(pg) { return !!pg.person_id; }).length;
+  var html = '<section class="layout-overview-head">' +
+    '<div class="layout-overview-copy">' +
+      '<div class="layout-overview-title">Seitenwerkstatt</div>' +
+      '<div class="layout-overview-sub">Buchseiten entwickeln, Material aus den Dossiers einsetzen und Bild, Text und Rhythmus zu einer gemeinsamen Sprache bringen.</div>' +
+    '</div>' +
+    '<div class="layout-overview-actions">' +
+      '<select id="layout-new-person" class="ai ai-sel" aria-label="Person für neue Seite">' + personOptions(null) + '</select>' +
       '<button class="mini-btn primary" onclick="createNewPage()">+ Neue Seite</button>' +
     '</div>' +
+  '</section>' +
+  '<div class="layout-summary">' +
+    '<div class="layout-summary-item"><strong>' + pages.length + '</strong> Seiten</div>' +
+    '<div class="layout-summary-item"><strong>' + elements + '</strong> Elemente</div>' +
+    '<div class="layout-summary-item"><strong>' + linked + '</strong> Personen verknüpft</div>' +
   '</div>';
 
   if (!pages.length) {
-    html += '<div class="empty"><div class="empty-ico">▤</div>Noch keine Seiten angelegt.</div>';
+    html += '<div class="empty"><div class="empty-ico">▤</div>Noch keine Seiten angelegt.<div class="readonly-note" style="margin-top:6px">Wähle oben optional eine Person und beginne mit einer leeren Seite.</div></div>';
   } else {
-    html += '<div class="layout-page-grid">' + pages.map(function(pg) {
+    html += '<div class="layout-page-grid">' + pages.map(function(pg, index) {
       var p = pg.person_id ? personById(pg.person_id) : null;
       var blockCount = (pg.blocks || []).length;
-      return '<div class="layout-page-card" onclick="openPageEditor(\'' + esc(pg.id) + '\')">' +
-        '<div class="layout-page-thumb">' + pageThumbHtml(pg) + '</div>' +
-        '<div class="layout-page-meta">' +
-          '<div class="layout-page-title">' + esc(pg.title || 'Ohne Titel') + '</div>' +
-          '<div class="readonly-note">' + (p ? esc(p.name) : 'Keine Person') + ' · ' + blockCount + ' Element' + (blockCount === 1 ? '' : 'e') + '</div>' +
-        '</div>' +
-        '<button class="mini-btn danger" onclick="event.stopPropagation();deletePage(\'' + esc(pg.id) + '\')">Löschen</button>' +
-      '</div>';
+      return '<article class="layout-page-card">' +
+        '<button class="layout-card-open" onclick="openPageEditor(\'' + esc(pg.id) + '\')" aria-label="Seite ' + (index + 1) + ': ' + esc(pg.title || 'Ohne Titel') + ' öffnen">' +
+          '<div class="layout-page-thumb"><span class="layout-page-number">' + (index + 1) + '</span>' + pageThumbHtml(pg) + '</div>' +
+          '<div class="layout-page-meta">' +
+            '<div class="layout-page-title">' + esc(pg.title || 'Ohne Titel') + '</div>' +
+            '<div class="readonly-note">' + (p ? esc(p.name) : 'Zuordnung offen') + ' · ' + blockCount + ' Element' + (blockCount === 1 ? '' : 'e') + '</div>' +
+          '</div>' +
+        '</button>' +
+        '<div class="layout-card-foot"><span class="layout-card-hint">Seite bearbeiten</span><button class="mini-btn danger" onclick="deletePage(\'' + esc(pg.id) + '\')">Löschen</button></div>' +
+      '</article>';
     }).join('') + '</div>';
   }
   main.innerHTML = html;
@@ -3432,20 +3515,39 @@ function openPageEditor(id) {
   var pg = bookPages.find(function(x) { return String(x.id) === String(id); });
   if (!pg) return;
   pg.blocks = Array.isArray(pg.blocks) ? pg.blocks : [];
-  layoutState.view = 'editor'; layoutState.page = pg; layoutState.selectedBlockId = null;
+  layoutState.view = 'editor'; layoutState.page = pg; layoutState.selectedBlockId = null; layoutState.saveStatus = 'saved';
+  window.scrollTo(0, 0);
   render();
 }
 
 function backToPageList() {
   layoutState.view = 'list'; layoutState.page = null; layoutState.selectedBlockId = null;
+  window.scrollTo(0, 0);
   render();
 }
 
 function renamePage(title) {
   var pg = layoutState.page; if (!pg) return;
   pg.title = title;
-  patchSupa('book_pages', pg, { title: title }).then(function(saved) { Object.assign(pg, saved || {}); })
-    .catch(function(err) { console.warn('Titel konnte nicht gespeichert werden:', err.message); });
+  setLayoutSaveStatus('saving');
+  patchSupa('book_pages', pg, { title: title }).then(function(saved) {
+    Object.assign(pg, saved || {}); setLayoutSaveStatus('saved');
+  }).catch(function(err) { setLayoutSaveStatus('error'); console.warn('Titel konnte nicht gespeichert werden:', err.message); });
+}
+
+function duplicatePage(id) {
+  var source = bookPages.find(function(x) { return String(x.id) === String(id); });
+  if (!source) return;
+  var copiedBlocks = JSON.parse(JSON.stringify(source.blocks || [])).map(function(block) {
+    block.id = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    return block;
+  });
+  insertSupa('book_pages', {
+    book_id: source.book_id || null, person_id: source.person_id || null,
+    title: (source.title || 'Neue Seite') + ' – Kopie', page_order: pagesForBook().length, blocks: copiedBlocks
+  }).then(function(saved) {
+    bookPages.push(saved); openPageEditor(saved.id);
+  }).catch(function(err) { alert('Seite konnte nicht dupliziert werden: ' + err.message); });
 }
 
 function deletePage(id) {
@@ -3461,21 +3563,44 @@ function deletePage(id) {
 
 function savePageBlocks() {
   var pg = layoutState.page; if (!pg) return;
+  setLayoutSaveStatus('saving');
   patchSupa('book_pages', pg, { blocks: pg.blocks }).then(function(saved) {
     Object.assign(pg, saved || {});
     var idx = bookPages.findIndex(function(x) { return x.id === pg.id; });
     if (idx >= 0) bookPages[idx] = pg;
-  }).catch(function(err) { console.warn('Seite konnte nicht gespeichert werden:', err.message); });
+    setLayoutSaveStatus('saved');
+  }).catch(function(err) { setLayoutSaveStatus('error'); console.warn('Seite konnte nicht gespeichert werden:', err.message); });
+}
+
+function setLayoutSaveStatus(status) {
+  layoutState.saveStatus = status;
+  var el = document.getElementById('layout-save-state');
+  if (!el) return;
+  el.className = 'layout-save-state ' + status;
+  el.textContent = status === 'saving' ? 'Speichert…' : (status === 'error' ? 'Nicht gespeichert' : 'Gespeichert');
 }
 
 function renderPageEditorView(main) {
   var pg = layoutState.page;
+  var pages = pagesForBook();
+  var pageIndex = pages.findIndex(function(x) { return String(x.id) === String(pg.id); });
+  var hasPrev = pageIndex > 0, hasNext = pageIndex > -1 && pageIndex < pages.length - 1;
+  var rail = '<aside class="layout-page-rail"><div class="layout-rail-title">Buchseiten</div><div class="layout-rail-list">' +
+    pages.map(function(item, index) {
+      return '<button class="layout-rail-item' + (String(item.id) === String(pg.id) ? ' on' : '') + '" onclick="openPageEditor(\'' + esc(item.id) + '\')" title="' + esc(item.title || 'Ohne Titel') + '">' +
+        '<span class="layout-rail-num">' + (index + 1) + '</span><span class="layout-rail-name">' + esc(item.title || 'Ohne Titel') + '</span></button>';
+    }).join('') + '</div></aside>';
   var wrap = document.createElement('div');
   wrap.innerHTML =
     '<div class="layout-toolbar">' +
-      '<button class="mini-btn" onclick="backToPageList()">← Seiten</button>' +
-      '<input id="layout-page-title" class="ai" style="width:220px" value="' + esc(pg.title || '') + '" onchange="renamePage(this.value)">' +
-      '<div class="actions">' +
+      '<div class="layout-toolbar-main">' +
+        '<button class="mini-btn" onclick="backToPageList()" title="Zur Seitenübersicht">← Übersicht</button>' +
+        '<button class="mini-btn" onclick="openAdjacentPage(-1)"' + (hasPrev ? '' : ' disabled') + ' aria-label="Vorherige Seite">‹</button>' +
+        '<button class="mini-btn" onclick="openAdjacentPage(1)"' + (hasNext ? '' : ' disabled') + ' aria-label="Nächste Seite">›</button>' +
+        '<input id="layout-page-title" class="ai layout-title-input" aria-label="Seitentitel" value="' + esc(pg.title || '') + '" onchange="renamePage(this.value)">' +
+        '<span id="layout-save-state" class="layout-save-state ' + layoutState.saveStatus + '">' + (layoutState.saveStatus === 'saving' ? 'Speichert…' : (layoutState.saveStatus === 'error' ? 'Nicht gespeichert' : 'Gespeichert')) + '</span>' +
+      '</div>' +
+      '<div class="layout-toolbar-tools">' +
         '<button class="mini-btn" onclick="addBlock(\'heading\')">+ Überschrift</button>' +
         '<button class="mini-btn" onclick="addBlock(\'text\')">+ Text</button>' +
         '<button class="mini-btn" onclick="addBlock(\'quote\')">+ Zitat</button>' +
@@ -3483,7 +3608,8 @@ function renderPageEditorView(main) {
       '</div>' +
     '</div>' +
     '<div class="layout-editor-wrap">' +
-      '<div class="page-canvas-scroll"><div class="page-canvas" id="page-canvas" style="width:' + PAGE_W + 'px;height:' + PAGE_H + 'px"></div></div>' +
+      rail +
+      '<div class="page-stage"><div class="page-canvas-scroll"><div class="page-canvas-shell"><div class="page-canvas" id="page-canvas" data-page="' + (pageIndex + 1) + '" style="width:' + PAGE_W + 'px;height:' + PAGE_H + 'px"></div></div></div></div>' +
       '<div class="layout-props" id="layout-props"></div>' +
     '</div>';
   main.innerHTML = '';
@@ -3495,10 +3621,18 @@ function renderPageEditorView(main) {
   renderPropsPanel();
 }
 
+function openAdjacentPage(direction) {
+  var pages = pagesForBook(), pg = layoutState.page;
+  var index = pages.findIndex(function(x) { return pg && String(x.id) === String(pg.id); });
+  var next = pages[index + direction];
+  if (next) openPageEditor(next.id);
+}
+
 function mkBlockEl(block) {
   var el = document.createElement('div');
   el.className = 'page-block' + (layoutState.selectedBlockId === block.id ? ' selected' : '');
   el.id = 'block-' + block.id;
+  el.dataset.label = BLOCK_TYPE_LABELS[block.type] || block.type;
   el.style.left = block.x + 'px'; el.style.top = block.y + 'px';
   el.style.width = block.w + 'px'; el.style.height = block.h + 'px';
   el.style.zIndex = block.z || 1;
@@ -3535,8 +3669,8 @@ function startDragBlock(e, id) {
   var el = document.getElementById('block-' + id);
   function onMove(ev) {
     moved = true;
-    block.x = Math.max(0, Math.min(PAGE_W - block.w, origX + (ev.clientX - startX)));
-    block.y = Math.max(0, Math.min(PAGE_H - block.h, origY + (ev.clientY - startY)));
+    block.x = Math.round(Math.max(0, Math.min(PAGE_W - block.w, origX + (ev.clientX - startX))) / 4) * 4;
+    block.y = Math.round(Math.max(0, Math.min(PAGE_H - block.h, origY + (ev.clientY - startY))) / 4) * 4;
     el.style.left = block.x + 'px'; el.style.top = block.y + 'px';
   }
   function onUp() {
@@ -3555,8 +3689,8 @@ function startResizeBlock(e, id) {
   var startX = e.clientX, startY = e.clientY, origW = block.w, origH = block.h;
   var el = document.getElementById('block-' + id);
   function onMove(ev) {
-    block.w = Math.max(40, Math.min(PAGE_W - block.x, origW + (ev.clientX - startX)));
-    block.h = Math.max(24, Math.min(PAGE_H - block.y, origH + (ev.clientY - startY)));
+    block.w = Math.round(Math.max(40, Math.min(PAGE_W - block.x, origW + (ev.clientX - startX))) / 4) * 4;
+    block.h = Math.round(Math.max(24, Math.min(PAGE_H - block.y, origH + (ev.clientY - startY))) / 4) * 4;
     el.style.width = block.w + 'px'; el.style.height = block.h + 'px';
   }
   function onUp() {
@@ -3574,6 +3708,46 @@ function addBlock(type) {
   var block = newBlock(type, pg.blocks.length);
   pg.blocks.push(block);
   layoutState.selectedBlockId = block.id;
+  renderPageEditorView(document.getElementById('main'));
+  savePageBlocks();
+}
+
+function applyPageTemplate(kind) {
+  var pg = layoutState.page; if (!pg) return;
+  if ((pg.blocks || []).length && !confirm('Die aktuelle Gestaltung durch diese Vorlage ersetzen?')) return;
+  var p = pg.person_id ? personById(pg.person_id) : null;
+  var pEntries = p ? personEntries(p) : [];
+  var quoteEntry = pEntries.find(function(x) { return x.kategorie === 'Zitat'; });
+  var bodyEntry = pEntries.find(function(x) { return x.kategorie !== 'Zitat'; }) || pEntries[0];
+  var images = p ? imagesForPerson(p) : [];
+  var title = p ? p.name : (pg.title || 'Titel der Seite');
+  var body = bodyEntry ? (entryText(bodyEntry) || bodyEntry.preview || '') : 'Hier beginnt der redaktionelle Text. Wähle rechts ein Element und verbinde es mit vorhandenem Material.';
+  var quote = quoteEntry ? (entryText(quoteEntry) || quoteEntry.preview || '') : 'Ein starkes Zitat setzt den Ton der Seite.';
+  var image = images.length ? images[0].url : '';
+  var blocks = [];
+
+  function templateBlock(type, values, style) {
+    var block = newBlock(type, blocks.length);
+    Object.assign(block, values || {});
+    block.style = Object.assign(block.style || {}, style || {});
+    blocks.push(block);
+  }
+
+  if (kind === 'editorial') {
+    templateBlock('heading', { x:32, y:34, w:416, h:66, content:title }, { fontSize:32, fontWeight:'400' });
+    templateBlock('image', { x:32, y:124, w:194, h:280, content:image });
+    templateBlock('text', { x:250, y:124, w:198, h:280, content:body, entryId:bodyEntry && bodyEntry.id }, { fontSize:12, fontFamily:'serif' });
+    templateBlock('quote', { x:32, y:452, w:416, h:150, content:quote, entryId:quoteEntry && quoteEntry.id }, { fontSize:18, fontFamily:'serif' });
+  } else if (kind === 'quote') {
+    templateBlock('heading', { x:50, y:58, w:380, h:52, content:title }, { fontSize:15, fontFamily:'sans', fontWeight:'700', align:'center' });
+    templateBlock('quote', { x:52, y:184, w:376, h:290, content:quote, entryId:quoteEntry && quoteEntry.id }, { fontSize:27, fontFamily:'serif', align:'center' });
+    templateBlock('text', { x:100, y:540, w:280, h:55, content:'Living Well · Pilotband' }, { fontSize:9, align:'center', color:'#8a8a8a' });
+  } else {
+    templateBlock('heading', { x:40, y:54, w:400, h:75, content:title }, { fontSize:34, fontWeight:'400' });
+    templateBlock('text', { x:40, y:170, w:400, h:360, content:body, entryId:bodyEntry && bodyEntry.id }, { fontSize:14, fontFamily:'serif' });
+  }
+  pg.blocks = blocks;
+  layoutState.selectedBlockId = null;
   renderPageEditorView(document.getElementById('main'));
   savePageBlocks();
 }
@@ -3619,9 +3793,26 @@ function setBlockStyle(key, value) {
 function renderPropsPanel() {
   var panel = document.getElementById('layout-props'); if (!panel) return;
   var block = layoutState.selectedBlockId ? currentBlock(layoutState.selectedBlockId) : null;
-  if (!block) { panel.innerHTML = '<div class="readonly-note">Element auswählen, um Eigenschaften zu bearbeiten.</div>'; return; }
+  if (!block) {
+    var pg = layoutState.page;
+    var p = pg && pg.person_id ? personById(pg.person_id) : null;
+    var blockCount = pg ? (pg.blocks || []).length : 0;
+    panel.innerHTML =
+      '<div class="layout-props-head"><div><div class="layout-props-kicker">Seite</div><div class="layout-props-title">' + esc(pg && pg.title || 'Ohne Titel') + '</div></div><span class="pill">' + blockCount + ' Element' + (blockCount === 1 ? '' : 'e') + '</span></div>' +
+      '<div class="layout-empty-inspector"><strong>' + (blockCount ? 'Element auswählen' : 'Mit einer Vorlage starten') + '</strong>' +
+        (blockCount ? 'Klicke auf Text, Bild oder Zitat auf der Seite, um Inhalt und Gestaltung zu bearbeiten.' : 'Eine Vorlage legt nur den ersten Rhythmus fest. Alle Elemente bleiben frei verschiebbar und editierbar.') +
+        '<div class="readonly-note" style="margin-top:8px">' + (p ? 'Verknüpft mit ' + esc(p.name) : 'Noch keiner Person zugeordnet') + '</div>' +
+      '</div>' +
+      '<div class="layout-template-grid">' +
+        '<button class="layout-template-btn" onclick="applyPageTemplate(\'editorial\')"><strong>Editoriales Porträt</strong><span>Bild, Einstieg, Haupttext und Zitat</span></button>' +
+        '<button class="layout-template-btn" onclick="applyPageTemplate(\'quote\')"><strong>Zitatseite</strong><span>Großer Gedanke, viel Weißraum</span></button>' +
+        '<button class="layout-template-btn" onclick="applyPageTemplate(\'essay\')"><strong>Ruhige Textseite</strong><span>Titel und langer Lesetext</span></button>' +
+      '</div>' +
+      '<div class="actions" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--br)"><button class="mini-btn" onclick="duplicatePage(\'' + esc(pg.id) + '\')">Seite duplizieren</button></div>';
+    return;
+  }
   var st = block.style || {};
-  var html = '<div class="dash-card-title" style="margin-bottom:10px">' + esc(BLOCK_TYPE_LABELS[block.type] || block.type) + '</div>';
+  var html = '<div class="layout-props-head"><div><div class="layout-props-kicker">Element</div><div class="layout-props-title">' + esc(BLOCK_TYPE_LABELS[block.type] || block.type) + '</div></div><span class="pill">Ausgewählt</span></div>';
 
   if (block.type === 'image') {
     var p = layoutState.page.person_id ? personById(layoutState.page.person_id) : null;

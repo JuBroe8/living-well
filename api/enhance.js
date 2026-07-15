@@ -217,6 +217,22 @@ async function generateWithModelFallback(ai, request, parseAndValidate) {
   throw lastErr;
 }
 
+// Grounding needs a Tier 1 (billed) project, so GEMINI_API_KEY stays
+// reserved for research calls. Both structuring calls below are plain JSON
+// generation with no tools, so they can run on a separate, free-tier
+// project's key if one is configured — falling back to the paid key (and
+// its own model fallback) on any failure.
+async function generateStructured(freeApiKey, paidAi, request, parseAndValidate) {
+  if (freeApiKey) {
+    try {
+      return await generateWithModelFallback(new GoogleGenAI({ apiKey: freeApiKey }), request, parseAndValidate);
+    } catch (freeErr) {
+      console.warn('Free-tier structuring call failed, falling back to paid key:', freeErr.message);
+    }
+  }
+  return generateWithModelFallback(paidAi, request, parseAndValidate);
+}
+
 function parseJsonOrThrow(result, validate) {
   let data;
   try {
@@ -248,6 +264,7 @@ module.exports = async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY nicht konfiguriert' });
+  const freeApiKey = process.env.GEMINI_API_KEY_FREE;
 
   const isExpand = mode === 'expand';
   if (isExpand && EXPAND_KATEGORIEN.indexOf(kategorie) < 0) {
@@ -291,7 +308,7 @@ module.exports = async function handler(req, res) {
           + `\n\nPerson: ${JSON.stringify(compactPerson(person))}`
           + researchNote;
 
-        const generated = await generateWithModelFallback(ai, {
+        const generated = await generateStructured(freeApiKey, ai, {
           contents,
           config: {
             systemInstruction: buildExpandPrompt(kategorie, expandCount),
@@ -346,7 +363,7 @@ module.exports = async function handler(req, res) {
         person: compactPerson(person),
         entries: entriesToScore
       };
-      const generated = await generateWithModelFallback(ai, {
+      const generated = await generateStructured(freeApiKey, ai, {
         contents: JSON.stringify(payload),
         config: {
           systemInstruction: PROMPT,

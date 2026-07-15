@@ -219,6 +219,12 @@ module.exports = async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY nicht konfiguriert' });
+  // Grounding needs a Tier 1 (billed) project — GEMINI_API_KEY stays
+  // reserved for that. The structuring call afterwards is plain JSON
+  // generation with no tools, so it can run on a separate, free-tier
+  // project's key instead if one is configured, falling back to the paid
+  // key on any failure (rate limit, invalid key, etc.).
+  const freeApiKey = process.env.GEMINI_API_KEY_FREE;
 
   // Enrich input with URL content
   const urls = detectUrls(input);
@@ -267,11 +273,20 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      const result = await generateWithTransientRetry(ai, {
+      const structuringRequest = {
         model: MODEL,
         contents: structuringInput,
         config: { systemInstruction: systemPrompt, responseMimeType: 'application/json', temperature: 0.55 }
-      });
+      };
+      let result;
+      if (freeApiKey) {
+        try {
+          result = await generateWithTransientRetry(new GoogleGenAI({ apiKey: freeApiKey }), structuringRequest);
+        } catch (freeErr) {
+          console.warn('Free-tier structuring call failed, falling back to paid key:', freeErr.message);
+        }
+      }
+      if (!result) result = await generateWithTransientRetry(ai, structuringRequest);
 
       usages.push(calculateUsage({
         usageMetadata: result.usageMetadata,

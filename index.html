@@ -114,6 +114,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .pc-ec { font-size: 10px; color: var(--t3); background: var(--bg2); border: 1px solid var(--br); border-radius: 10px; padding: 2px 8px; margin-top: 9px; display: inline-block }
 .pc-ec.has { color: var(--gn); background: #eef6f1; border-color: #b8d8c8 }
 .pc-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px }
+.pc-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--bg2); border: 1px solid var(--br) }
 
 /* ── PILLS ── */
 .pill { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; border-radius: 10px; padding: 2px 8px; border: 1px solid var(--br2); color: var(--t3); white-space: nowrap }
@@ -165,6 +166,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 /* ── PROFILE VIEW ── */
 .profile-hd { background: var(--wh); border: 1px solid var(--br); border-radius: var(--r); padding: 18px 20px; margin-bottom: 12px }
 .profile-hd-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start }
+.profile-portrait { width: 72px; height: 72px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--bg2); border: 1px solid var(--br) }
 .profile-name { font-family: var(--serif); font-size: 26px; font-weight: 400; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 4px }
 .profile-dates-line { font-family: var(--serif); font-size: 14px; color: var(--t3); font-style: italic; letter-spacing: .01em; margin-bottom: 8px }
 .profile-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 0 }
@@ -191,6 +193,19 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .bio-body { font-family: var(--serif); font-size: 14px; color: var(--t2); line-height: 1.75 }
 .bio-body p { margin-bottom: 1em }
 .bio-body p:last-child { margin-bottom: 0 }
+
+/* ── PERSON IMAGE GALLERY ── */
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 10px }
+.gallery-item { position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--br); background: var(--bg2); aspect-ratio: 1 }
+.gallery-item.is-cover { border-color: var(--gn); box-shadow: 0 0 0 2px rgba(45,106,79,.25) }
+.gallery-item img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover }
+.gallery-item-actions { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; background: linear-gradient(to top, rgba(0,0,0,.55), transparent) }
+.gallery-cover-badge { font-size: 8.5px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; background: var(--gn); color: #fff; padding: 3px 6px; border-radius: 20px; white-space: nowrap }
+.gallery-btn { font-size: 8.5px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; background: rgba(20,20,20,.75); color: #fff; border: 0; border-radius: 20px; padding: 3px 6px; cursor: pointer; white-space: nowrap }
+.gallery-btn:hover { background: rgba(20,20,20,.92) }
+.gallery-btn-rm:hover { background: #a33124 }
+.gallery-add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--br) }
+.gallery-add-row .ai { flex: 1; min-width: 200px }
 
 .prof-section { margin-bottom: 20px }
 .prof-sec-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 9px; border-bottom: 2px solid var(--tx) }
@@ -445,7 +460,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 var SB = 'https://beglfjfqzczhjxzsgxgc.supabase.co';
 var SK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlZ2xmamZxemN6aGp4enNneGdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNzQzMTksImV4cCI6MjA5Mjk1MDMxOX0.63T9b1GvvwJ64vkA7r0rBmm7jYVxWjj_thLFW3iDG-Y';
 
-var persons = [], entries = [], places = [], books = [], bookCandidates = [], researchJobs = [], aiRuns = [];
+var persons = [], entries = [], places = [], books = [], bookCandidates = [], researchJobs = [], aiRuns = [], personImages = [];
 var tableAvailability = {};
 var view = 'status';
 var profilePerson = null;
@@ -557,10 +572,10 @@ function init() {
   Promise.all([
     supa('persons'), supa('entries'), supa('places'),
     supaOptional('books'), supaOptional('book_candidates'),
-    supaOptional('research_jobs'), supaOptional('ai_runs')
+    supaOptional('research_jobs'), supaOptional('ai_runs'), supaOptional('person_images')
   ]).then(function(r) {
     persons = r[0]; entries = r[1]; places = r[2]; books = r[3];
-    bookCandidates = r[4]; researchJobs = r[5]; aiRuns = r[6];
+    bookCandidates = r[4]; researchJobs = r[5]; aiRuns = r[6]; personImages = r[7];
     normalizeData();
     updateStats();
     goTab(requestedView || 'status');
@@ -725,7 +740,10 @@ function mkPCard(p) {
   c.tabIndex = 0;
   c.innerHTML =
     '<div class="pc-top">' +
-      '<div class="pc-name">' + esc(p.name) + '</div>' +
+      (p.image_url ? '<img class="pc-thumb" src="' + esc(p.image_url) + '" alt="">' : '') +
+      '<div style="flex:1;min-width:0">' +
+        '<div class="pc-name">' + esc(p.name) + '</div>' +
+      '</div>' +
       '<div class="sdot ' + dc + '" title="' + esc(p.status || '') + '"></div>' +
     '</div>' +
     (p.kategorie ? '<div class="pc-role">'  + esc(p.kategorie) + '</div>' : '') +
@@ -770,6 +788,7 @@ function rProfile(main) {
   var hd = document.createElement('div'); hd.className = 'profile-hd';
   hd.innerHTML =
     '<div class="profile-hd-top">' +
+      (p.image_url ? '<img class="profile-portrait" src="' + esc(p.image_url) + '" alt="">' : '') +
       '<div>' +
         '<div class="profile-name">' + esc(p.name) + '</div>' +
         (p.dates ? '<div class="profile-dates-line">' + esc(p.dates) + '</div>' : '') +
@@ -789,6 +808,10 @@ function rProfile(main) {
     '</div>' +
     (tags ? '<hr class="profile-divider"><div class="profile-tags">' + tags + '</div>' : '');
   main.appendChild(hd);
+
+  var gallery = document.createElement('div'); gallery.className = 'profile-bio';
+  gallery.innerHTML = galleryHtml(p);
+  main.appendChild(gallery);
 
   if (enhanceState.personName === p.name && enhanceState.phase !== 'idle') {
     main.appendChild(renderEnhancePanel(p));
@@ -874,6 +897,120 @@ function rProfileEdit(main, p) {
   main.appendChild(box);
 }
 
+// ── PERSON IMAGE GALLERY ──────────────────────────
+// person_images is the source of truth (many candidates per person);
+// persons.image_url is kept as a denormalized cache of the current cover
+// so card grids/profile headers can render without a join.
+function imagesForPerson(p) {
+  return personImages.filter(function(img) { return String(img.person_id) === String(p.id); })
+    .sort(function(a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+}
+function coverImageUrl(p) {
+  var imgs = imagesForPerson(p);
+  var cover = imgs.find(function(i) { return i.is_cover; });
+  return (cover || imgs[0] || {}).url || p.image_url || '';
+}
+
+function galleryHtml(p) {
+  var imgs = imagesForPerson(p);
+  var grid = imgs.map(function(img) {
+    return '<div class="gallery-item' + (img.is_cover ? ' is-cover' : '') + '" data-image-id="' + esc(img.id) + '">' +
+      '<img src="' + esc(img.url) + '" alt="">' +
+      '<div class="gallery-item-actions">' +
+        (img.is_cover ? '<span class="gallery-cover-badge">Titelbild</span>' : '<button class="gallery-btn" onclick="setCoverImage(\'' + esc(img.id) + '\')">Als Titelbild</button>') +
+        '<button class="gallery-btn gallery-btn-rm" onclick="removePersonImage(\'' + esc(img.id) + '\')" title="Entfernen" aria-label="Entfernen">✕</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  return '<div class="profile-gallery">' +
+    '<div class="profile-bio-lbl">Bilder' + (imgs.length ? ' (' + imgs.length + ')' : '') + '</div>' +
+    (grid ? '<div class="gallery-grid">' + grid + '</div>' : '<div class="readonly-note">Noch keine Bilder — per Datei oder Link hinzufügen.</div>') +
+    '<div class="gallery-add-row">' +
+      '<input id="gallery-add-url" class="ai" placeholder="https://… Bild-URL einfügen und Enter drücken" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addPersonImageFromUrl()}">' +
+      '<button class="mini-btn" onclick="addPersonImageFromUrl()">Hinzufügen</button>' +
+      '<label class="mini-btn" style="cursor:pointer">Datei hochladen<input type="file" accept="image/*" style="display:none" onchange="addPersonImageFromFile(this)"></label>' +
+      '<span class="save-msg" id="gallery-msg"></span>' +
+    '</div>' +
+  '</div>';
+}
+
+function syncCoverCache(p, url) {
+  return patchSupa('persons', p, { image_url: url || null }).then(function(saved) {
+    Object.assign(p, saved || { image_url: url || null });
+  });
+}
+
+function addPersonImageRecord(p, url, makeItCover) {
+  return insertSupa('person_images', { person_id: p.id, url: url, is_cover: !!makeItCover }).then(function(saved) {
+    personImages.push(saved);
+    if (makeItCover) return syncCoverCache(p, url);
+  });
+}
+
+function addPersonImageFromUrl() {
+  var p = profilePerson; if (!p) return;
+  var input = document.getElementById('gallery-add-url');
+  var url = normalizeUrl(input ? input.value : '');
+  var msg = document.getElementById('gallery-msg');
+  if (!url) { if (msg) msg.textContent = 'Keine gültige URL.'; return; }
+  var isFirst = imagesForPerson(p).length === 0;
+  addPersonImageRecord(p, url, isFirst).then(function() {
+    if (input) input.value = '';
+    render();
+  }).catch(function(err) {
+    if (msg) msg.textContent = 'Fehler: ' + err.message;
+  });
+}
+
+function addPersonImageFromFile(inputEl) {
+  var p = profilePerson; if (!p) return;
+  var file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  var msg = document.getElementById('gallery-msg');
+  if (msg) msg.textContent = 'Lädt hoch…';
+  var isFirst = imagesForPerson(p).length === 0;
+  uploadPersonImage(file).then(function(url) {
+    return addPersonImageRecord(p, url, isFirst);
+  }).then(function() {
+    render();
+  }).catch(function(err) {
+    if (msg) msg.textContent = 'Fehler: ' + err.message;
+  });
+}
+
+function setCoverImage(imageId) {
+  var p = profilePerson; if (!p) return;
+  var imgs = imagesForPerson(p);
+  var target = imgs.find(function(i) { return String(i.id) === String(imageId); });
+  if (!target) return;
+  Promise.all(imgs.filter(function(i) { return i.is_cover && i.id !== target.id; })
+    .map(function(i) { return patchSupa('person_images', i, { is_cover: false }).then(function(saved) { Object.assign(i, saved || { is_cover: false }); }); }))
+    .then(function() { return patchSupa('person_images', target, { is_cover: true }); })
+    .then(function(saved) { Object.assign(target, saved || { is_cover: true }); return syncCoverCache(p, target.url); })
+    .then(render)
+    .catch(function(err) { alert('Titelbild konnte nicht gesetzt werden: ' + err.message); });
+}
+
+function removePersonImage(imageId) {
+  var p = profilePerson; if (!p) return;
+  var imgs = imagesForPerson(p);
+  var target = imgs.find(function(i) { return String(i.id) === String(imageId); });
+  if (!target) return;
+  fetch(SB + '/rest/v1/person_images?' + matchQuery('person_images', target), {
+    method: 'DELETE', headers: supaHeaders('return=minimal')
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error(parseSupaErr(t)); });
+    personImages = personImages.filter(function(i) { return i.id !== target.id; });
+    if (target.is_cover) {
+      var remaining = imagesForPerson(p);
+      var next = remaining[0];
+      if (next) return setCoverImage(next.id);
+      return syncCoverCache(p, '').then(render);
+    }
+    render();
+  }).catch(function(err) { alert('Bild konnte nicht entfernt werden: ' + err.message); });
+}
+
 function editProfile() { profileEdit = true; render(); }
 function cancelProfileEdit() { profileEdit = false; render(); }
 function moreResearch() {
@@ -901,7 +1038,8 @@ function saveProfileEdit() {
     spannung: val('edit-p-tension'),
     visuelles_motiv: val('edit-p-visual'),
     format_eignung: getChecked('edit-p-format'),
-    kurationsnotiz: val('edit-p-cur-note')
+    kurationsnotiz: val('edit-p-cur-note'),
+    image_url: p.image_url || '' // managed by the gallery, not this form
   };
   patchSupa('persons', p, personPayload(data, false)).then(function(saved) {
     Object.assign(p, saved || data);
@@ -1953,6 +2091,27 @@ function insertSupa(table, payload) {
     body: JSON.stringify(payload)
   }).then(handleSupa);
 }
+var IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+
+// Uploads directly to the public person-images bucket (anon insert-only,
+// see the migration) and resolves to the object's public URL — same URL
+// shape works whether the image came from an upload or was pasted in.
+function uploadPersonImage(file) {
+  if (!file) return Promise.reject(new Error('Keine Datei ausgewählt.'));
+  if (!/^image\//.test(file.type)) return Promise.reject(new Error('Nur Bilddateien sind erlaubt.'));
+  if (file.size > IMAGE_MAX_BYTES) return Promise.reject(new Error('Datei zu groß (max. 8 MB).'));
+  var ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  var path = 'p-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+  return fetch(SB + '/storage/v1/object/person-images/' + path, {
+    method: 'POST',
+    headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK, 'Content-Type': file.type },
+    body: file
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error(parseSupaErr(t)); });
+    return SB + '/storage/v1/object/public/person-images/' + path;
+  });
+}
+
 function claimResearchJob(job) {
   return fetch(SB + '/rest/v1/rpc/claim_research_job', {
     method:'POST', headers:supaHeaders('return=representation'),
@@ -1973,7 +2132,8 @@ function personPayload(p, includeName) {
     spannung: p.spannung || '',
     visuelles_motiv: p.visuelles_motiv || '',
     format_eignung: arr(p.format_eignung),
-    kurationsnotiz: p.kurationsnotiz || ''
+    kurationsnotiz: p.kurationsnotiz || '',
+    image_url: normalizeUrl(p.image_url) || null
   };
   if (includeName) obj.name = p.name || '';
   return obj;

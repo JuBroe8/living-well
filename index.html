@@ -45,6 +45,11 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .tab:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, .pc:focus-visible { outline: 2px solid #b98a1d; outline-offset: 2px }
 .tab-add { margin-left: auto; color: #eee; font-weight: 700 }
 .tab-sep { width: 1px; background: #333; height: 18px; align-self: center; margin: 0 6px; display: none }
+.more-wrap { position: relative }
+.more-menu { display: none; position: absolute; top: 100%; left: 0; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 6px; min-width: 150px; z-index: 50; box-shadow: 0 8px 20px rgba(0,0,0,.35) }
+.more-menu.open { display: block }
+.more-menu button { display: block; width: 100%; text-align: left; background: transparent; border: 0; color: #ccc; font-family: inherit; font-size: 12px; padding: 8px 10px; border-radius: 4px; cursor: pointer }
+.more-menu button:hover { background: #262626; color: #fff }
 .back-btn { font-size: 11px; color: #555; cursor: pointer; padding: 11px 14px; transition: color .15s; display: none; align-items: center; gap: 6px; letter-spacing: .03em }
 .back-btn:hover { color: #ccc }
 .back-btn.vis { display: flex }
@@ -522,19 +527,24 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
   <div>
     <div class="kicker">Buchprojekt · Redaktion</div>
     <div class="logo">Living Well</div>
-    <div class="tagline">Personenpool · Pilotband · Recherche</div>
+    <div class="tagline">Personen · Pilotband · Material</div>
   </div>
   <div class="hstats" id="hstats" style="color:#555;font-size:12px">Lädt…</div>
 </div></div>
 
 <nav class="tabs" aria-label="Hauptnavigation"><div class="tabs-in">
-  <button class="tab on" data-tab="status" data-short="Start" aria-label="Arbeitsplatz" onclick="goTab('status')">Arbeitsplatz</button>
+  <button class="tab on" data-tab="status" data-short="Heute" aria-label="Heute" onclick="goTab('status')">Heute</button>
+  <button class="tab" data-tab="persons" data-short="Personen" aria-label="Personen" onclick="goTab('persons')">Personen</button>
   <button class="tab" data-tab="pilot" data-short="Pilot" aria-label="Pilotband" onclick="goTab('pilot')">Pilotband</button>
-  <button class="tab" data-tab="persons" data-short="Pool" aria-label="Personenpool" onclick="goTab('persons')">Personenpool</button>
-  <button class="tab" data-tab="entries" data-short="Recherche" aria-label="Recherche" onclick="goTab('entries')">Recherche</button>
-  <button class="tab tab-more" data-tab="places" data-short="Orte" aria-label="Orte" onclick="goTab('places')">Orte</button>
-  <button class="tab tab-more" data-tab="kosten" data-short="Kosten" aria-label="Kosten" onclick="goTab('kosten')">Kosten</button>
   <button class="tab" data-tab="layout" data-short="Seiten" aria-label="Seiten" onclick="goTab('layout')">Seiten</button>
+  <div class="more-wrap tab-more">
+    <button class="tab" id="more-tab" data-tab="more" aria-haspopup="true" aria-expanded="false" onclick="toggleMoreMenu(event)">Mehr</button>
+    <div class="more-menu" id="more-menu">
+      <button data-tab="entries" onclick="goTab('entries')">Material</button>
+      <button data-tab="places" onclick="goTab('places')">Orte</button>
+      <button data-tab="kosten" onclick="goTab('kosten')">KI-Kosten</button>
+    </div>
+  </div>
   <button class="tab tab-add" data-tab="add" data-short="+ Name" aria-label="+ Name" onclick="openCapture()">+ Name</button>
   <div class="tab-sep" id="tab-sep"></div>
   <div class="back-btn" id="back-btn" onclick="goTab('persons')">
@@ -628,6 +638,7 @@ var profileEdit = false;
 var fitPanelExpanded = false;
 var bookPages = [];
 var layoutState = { view: 'list', page: null, selectedBlockId: null, saveStatus: 'saved' };
+var layoutPresetPersonId = null;
 var BLOCK_FONTS = { serif: "Georgia, 'Times New Roman', serif", sans: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" };
 var PAGE_W = 480, PAGE_H = 678; // ~A5-ish ratio at editing scale
 var enhanceState = { phase: 'idle', personName: '', data: null, error: '' };
@@ -722,11 +733,16 @@ function stat(n, l) {
 }
 
 // ── NAVIGATION ───────────────────────────────────
+var MORE_VIEWS = ['entries', 'places', 'kosten'];
 function goTab(t) {
   view = t; profilePerson = null; profileEdit = false; fil = {};
   document.querySelectorAll('.tab').forEach(function(x) {
     x.classList.toggle('on', x.dataset.tab === t);
   });
+  document.getElementById('more-tab').classList.toggle('on', MORE_VIEWS.indexOf(t) >= 0);
+  closeMoreMenu();
+  if (t !== 'layout') layoutPresetPersonId = null;
+  if (t === 'pilot') pilotQueueLimit = 12;
   document.getElementById('back-btn').classList.remove('vis');
   document.getElementById('tab-sep').style.display = 'none';
   document.getElementById('bar').style.display = (t === 'add' || t === 'status' || t === 'pilot' || t === 'kosten' || t === 'layout') ? 'none' : '';
@@ -735,6 +751,19 @@ function goTab(t) {
   window.scrollTo(0, 0);
   chips(); render();
 }
+
+function toggleMoreMenu(e) {
+  e.stopPropagation();
+  var menu = document.getElementById('more-menu');
+  var willOpen = !menu.classList.contains('open');
+  menu.classList.toggle('open', willOpen);
+  document.getElementById('more-tab').setAttribute('aria-expanded', String(willOpen));
+}
+function closeMoreMenu() {
+  document.getElementById('more-menu').classList.remove('open');
+  document.getElementById('more-tab').setAttribute('aria-expanded', 'false');
+}
+document.addEventListener('click', closeMoreMenu);
 
 function openCapture() {
   addState = { phase: 'input', person: null, entries: [], prefill: '', job: null, usage: null, mode: 'capture' };
@@ -905,7 +934,7 @@ function rProfile(main) {
       '</div>' +
       '<div>' +
         '<div class="actions">' +
-          '<button class="mini-btn" onclick="moreResearch()">Mehr recherchieren</button>' +
+          '<button class="mini-btn" onclick="moreResearch()">Recherche ergänzen</button>' +
           '<button class="mini-btn" onclick="editProfile()">Bearbeiten</button>' +
         '</div>' +
         enhanceFilterBar(p, pEntries) +
@@ -1336,7 +1365,7 @@ function renderEnhancePanel(p) {
   if (enhanceState.phase === 'loading') {
     box.innerHTML =
       '<div class="enhance-hd">' +
-        '<div><div class="enhance-title">Gemini-Kuration' + esc(filterLbl) + '</div><div class="enhance-sub">Analysiert Profil, Einträge und Tags. Es wird noch nichts gespeichert.</div></div>' +
+        '<div><div class="enhance-title">KI-Vorschläge' + esc(filterLbl) + '</div><div class="enhance-sub">Analysiert Profil, Einträge und Tags. Es wird noch nichts gespeichert.</div></div>' +
         '<button class="mini-btn" onclick="cancelEnhance()">Schließen</button>' +
       '</div>' +
       '<div class="enhance-loading">Vorschläge werden erzeugt…</div>';
@@ -1347,7 +1376,7 @@ function renderEnhancePanel(p) {
     var retryKey = enhanceState.filterKey ? '\'' + enhanceState.filterKey + '\'' : '';
     box.innerHTML =
       '<div class="enhance-hd">' +
-        '<div><div class="enhance-title">Gemini-Kuration' + esc(filterLbl) + '</div><div class="enhance-sub">Fehler: ' + esc(enhanceState.error) + '</div></div>' +
+        '<div><div class="enhance-title">KI-Vorschläge' + esc(filterLbl) + '</div><div class="enhance-sub">Fehler: ' + esc(enhanceState.error) + '</div></div>' +
         '<div class="actions"><button class="mini-btn primary" onclick="startEnhance(' + retryKey + ')">Erneut versuchen</button><button class="mini-btn" onclick="cancelEnhance()">Schließen</button></div>' +
       '</div>';
     return box;
@@ -1356,7 +1385,7 @@ function renderEnhancePanel(p) {
   if (enhanceState.phase === 'saved') {
     box.innerHTML =
       '<div class="enhance-hd">' +
-        '<div><div class="enhance-title">Gemini-Kuration' + esc(filterLbl) + '</div><div class="enhance-sub">Ausgewählte Vorschläge wurden gespeichert.</div></div>' +
+        '<div><div class="enhance-title">KI-Vorschläge' + esc(filterLbl) + '</div><div class="enhance-sub">Ausgewählte Vorschläge wurden gespeichert.</div></div>' +
         '<button class="mini-btn" onclick="cancelEnhance()">Schließen</button>' +
       '</div>';
     return box;
@@ -2018,6 +2047,41 @@ function personOptions(current) {
     return '<option value="' + esc(p.id) + '"' + (String(current || '') === String(p.id) ? ' selected' : '') + '>' + esc(p.name) + '</option>';
   }).join('');
 }
+// Groups persons already committed to the pilot ahead of the wide pool, so
+// starting a page for a shortlist/pilot person doesn't require scrolling
+// past 100+ unrelated names.
+function personOptionsGrouped(current) {
+  var book = activeBook();
+  var pilotIds = {}, shortlistIds = {};
+  if (book) {
+    bookCandidates.filter(function(c) { return String(c.book_id) === String(book.id); }).forEach(function(c) {
+      if (c.stage === 'selected') pilotIds[c.person_id] = true;
+      else if (c.stage === 'shortlist') shortlistIds[c.person_id] = true;
+    });
+  }
+  var pilotList = [], shortlistList = [], restList = [];
+  persons.forEach(function(p) {
+    if (pilotIds[p.id]) pilotList.push(p);
+    else if (shortlistIds[p.id]) shortlistList.push(p);
+    else restList.push(p);
+  });
+  function byName(a, b) { return String(a.name).localeCompare(String(b.name), 'de'); }
+  [pilotList, shortlistList, restList].forEach(function(l) { l.sort(byName); });
+  function optionsFor(list) {
+    return list.map(function(p) {
+      return '<option value="' + esc(p.id) + '"' + (String(current || '') === String(p.id) ? ' selected' : '') + '>' + esc(p.name) + '</option>';
+    }).join('');
+  }
+  var html = '<option value="">— Zuordnung offen —</option>';
+  if (pilotList.length) html += '<optgroup label="Im Pilot">' + optionsFor(pilotList) + '</optgroup>';
+  if (shortlistList.length) html += '<optgroup label="Shortlist">' + optionsFor(shortlistList) + '</optgroup>';
+  html += '<optgroup label="Weitere Personen">' + optionsFor(restList) + '</optgroup>';
+  return html;
+}
+function openPageWorkshopForPerson(p) {
+  layoutPresetPersonId = p.id;
+  goTab('layout');
+}
 function checkGroup(name, values, selected) {
   selected = arr(selected);
   return '<div class="checkgrid">' + values.map(function(v) {
@@ -2371,6 +2435,40 @@ function dossierModel(p) {
   return { checks: checks, count: checks.filter(function(x) { return x[1]; }).length };
 }
 
+// Single source of truth for "what should this person work on next" — feeds
+// the dashboard queue, person-pool sort/CTA and the profile hauptaktion, so
+// none of them can drift into disagreeing about priority. Mirrors the
+// priority list in docs/ux-workflow-implementation.md.
+function personHasPage(p) {
+  return bookPages.some(function(pg) { return String(pg.person_id) === String(p.id); });
+}
+function openReviewJobFor(p) {
+  return researchJobs.find(function(j) { return String(j.person_id) === String(p.id) && j.status === 'review'; }) || null;
+}
+function nextActionForPerson(p) {
+  var pe = personEntries(p);
+  if (!pe.length) return { key: 'research', label: 'Recherche starten' };
+  var job = openReviewJobFor(p);
+  if (job) return { key: 'review', label: 'Vorschlag prüfen', jobId: job.id };
+  var d = dossierModel(p);
+  if (d.count < 6) return { key: 'dossier', label: 'Dossier vervollständigen' };
+  var c = candidateFor(p), fit = fitScore(c);
+  if (fit === null) return { key: 'fit', label: 'Fit bewerten' };
+  if (c && c.stage === 'pruefen') return { key: 'decide', label: 'Auswahl entscheiden' };
+  if (c && c.stage === 'shortlist' && !personHasPage(p)) return { key: 'page', label: 'Seite gestalten' };
+  if (c && c.stage === 'selected') return { key: 'pilot', label: 'Pilotprofil ausarbeiten' };
+  return { key: 'done', label: 'Nichts offen' };
+}
+function runNextAction(p) {
+  var a = nextActionForPerson(p);
+  if (a.key === 'review' && a.jobId) { openResearchJob(a.jobId); return; }
+  if (a.key === 'page') { openPageWorkshopForPerson(p); return; }
+  showProfile(p);
+  if (a.key === 'fit') setTimeout(function() { fitPanelExpanded = true; render(); }, 0);
+  else if (a.key === 'research') setTimeout(moreResearch, 0);
+}
+function missingLabel(gap) { return 'Fehlt: ' + gap; }
+
 function openSourceCount() {
   return entries.filter(entryUnchecked).length;
 }
@@ -2392,6 +2490,24 @@ function bestSourceExamples() {
     });
 }
 
+var pilotQueueLimit = 12;
+var PILOT_COLUMN_EMPTY = {
+  pruefen: 'Bewertete Personen erscheinen hier zur Entscheidung.',
+  shortlist: 'Bewertete Personen können hier auf die Shortlist gesetzt werden.',
+  selected: 'Noch niemand ausgewählt. Beginne oben mit der Prüfung.',
+  parked: 'Zurückgestellte Kandidaten landen hier.'
+};
+function pilotIntakeSort(a, b) {
+  var da = dossierModel(a.person), db = dossierModel(b.person);
+  var ra = da.count >= 5 ? 1 : 0, rb = db.count >= 5 ? 1 : 0;
+  if (ra !== rb) return rb - ra;
+  if (a.entryCount !== b.entryCount) return b.entryCount - a.entryCount;
+  return String(a.person.name).localeCompare(String(b.person.name), 'de');
+}
+function fitBewertenForPerson(p) {
+  showProfile(p);
+  setTimeout(function() { fitPanelExpanded = true; render(); }, 0);
+}
 function rPilot(main) {
   main.innerHTML = '';
   var book = activeBook();
@@ -2400,6 +2516,10 @@ function rPilot(main) {
     return;
   }
   var candidates = bookCandidates.filter(function(c) { return String(c.book_id) === String(book.id); });
+  var poolCandidates = candidates.filter(function(c) { return !c.stage || c.stage === 'pool'; })
+    .map(function(c) { var p = personById(c.person_id); return p ? { c: c, person: p, entryCount: personEntries(p).length } : null; })
+    .filter(Boolean)
+    .sort(pilotIntakeSort);
   var evaluated = candidates.filter(function(c) { return fitScore(c) !== null; }).length;
   var selected = candidates.filter(function(c) { return c.stage === 'selected'; }).length;
   var shortlist = candidates.filter(function(c) { return c.stage === 'shortlist'; }).length;
@@ -2410,12 +2530,33 @@ function rPilot(main) {
     '<p class="pilot-thesis">„' + esc(book.thesis || PILOT_THESIS) + '“</p>' +
     '<p class="pilot-note">Der Personenpool bleibt offen. Hier wird nur entschieden, wer für diesen Band trägt.</p>' +
   '</section>' +
-  '<div class="metric-grid">' + dashMetric(candidates.length, 'Im Workflow') + dashMetric(evaluated, 'Bewertet') + dashMetric(shortlist, 'Shortlist') + dashMetric(selected, 'Im Pilot') + '</div>' +
-  '<div class="pilot-board">';
+  '<div class="metric-grid">' + dashMetric(poolCandidates.length, 'Noch zu prüfen') + dashMetric(evaluated, 'Bewertet') + dashMetric(shortlist, 'Shortlist') + dashMetric(selected, 'Im Pilot') + '</div>';
+
+  if (poolCandidates.length) {
+    var shown = poolCandidates.slice(0, pilotQueueLimit);
+    html += '<section class="dash-card" style="margin-bottom:16px">' +
+      '<div class="dash-card-hd"><div><div class="dash-card-title">Als Nächstes prüfen</div><div class="dash-card-note">' + poolCandidates.length + ' Personen warten auf eine erste Fit-Bewertung.</div></div></div>' +
+      '<div class="queue-list">' + shown.map(function(item) {
+        var p = item.person, d = dossierModel(p), gaps = personDashboardModel(p).gaps;
+        return '<div class="queue-row">' +
+          '<div>' +
+            '<div class="queue-name" data-open-person="' + esc(p.name) + '">' + esc(p.name) + '</div>' +
+            '<div class="queue-meta">' + esc(p.kategorie || 'noch ohne Kategorie') + ' · ' + item.entryCount + ' Eintr' + (item.entryCount === 1 ? 'ag' : 'äge') +
+              (gaps.length ? ' · ' + gaps.slice(0, 2).map(missingLabel).join(', ') : '') + '</div>' +
+            '<div class="dossier-row"><span class="pill ' + (d.count >= 6 ? 'pill-s' : 'pill-q') + '">Dossier ' + d.count + '/8</span></div>' +
+          '</div>' +
+          '<div class="actions"><button class="mini-btn primary" data-fit-person="' + esc(p.id) + '">Fit bewerten</button></div>' +
+        '</div>';
+      }).join('') + '</div>' +
+      (poolCandidates.length > shown.length ? '<div class="actions" style="margin-top:10px"><button class="mini-btn" id="pilot-queue-more">Mehr anzeigen (' + (poolCandidates.length - shown.length) + ')</button></div>' : '') +
+    '</section>';
+  }
+
+  html += '<div class="pilot-board">';
   CANDIDATE_STAGES.forEach(function(stage) {
     var list = candidates.filter(function(c) { return c.stage === stage; }).sort(function(a,b) { return fitScore(b) - fitScore(a); });
     html += '<section class="pilot-col"><div class="pilot-col-hd"><span>' + esc(STAGE_LABELS[stage]) + '</span><span>' + list.length + '</span></div>';
-    if (!list.length) html += '<div class="readonly-note">Noch leer</div>';
+    if (!list.length) html += '<div class="readonly-note">' + esc(PILOT_COLUMN_EMPTY[stage] || 'Noch leer') + '</div>';
     list.forEach(function(c) {
       var p = personById(c.person_id); if (!p) return;
       var score = fitScore(c), dossier = dossierModel(p);
@@ -2432,6 +2573,12 @@ function rPilot(main) {
   wrap.querySelectorAll('[data-pilot-person]').forEach(function(el) {
     el.onclick = function() { var p = personById(el.getAttribute('data-pilot-person')); if (p) showProfile(p); };
   });
+  wrap.querySelectorAll('[data-fit-person]').forEach(function(el) {
+    el.onclick = function(e) { e.stopPropagation(); var p = personById(el.getAttribute('data-fit-person')); if (p) fitBewertenForPerson(p); };
+  });
+  bindDashboardActions(wrap);
+  var moreBtn = wrap.querySelector('#pilot-queue-more');
+  if (moreBtn) moreBtn.onclick = function() { pilotQueueLimit += 12; render(); };
   main.appendChild(wrap);
 }
 
@@ -3032,7 +3179,7 @@ function rAdd(main) {
   // Input phase
   var card = document.createElement('div'); card.className = 'add-card';
   card.innerHTML =
-    '<div class="pilot-kicker">Quick Capture</div>' +
+    '<div class="pilot-kicker">Schnellerfassung</div>' +
     '<h1 class="dash-title" style="margin-bottom:8px">Ein Name reicht.</h1>' +
     '<p class="add-intro">Der Name wird sofort im Personenpool gesichert. Du kannst ihn nur merken oder direkt einen Recherchelauf starten.</p>' +
     '<div class="add-fld">' +
@@ -3465,7 +3612,7 @@ function renderLayoutList(main) {
       '<div class="layout-overview-sub">Buchseiten entwickeln, Material aus den Dossiers einsetzen und Bild, Text und Rhythmus zu einer gemeinsamen Sprache bringen.</div>' +
     '</div>' +
     '<div class="layout-overview-actions">' +
-      '<select id="layout-new-person" class="ai ai-sel" aria-label="Person für neue Seite">' + personOptions(null) + '</select>' +
+      '<select id="layout-new-person" class="ai ai-sel" aria-label="Person für neue Seite">' + personOptionsGrouped(layoutPresetPersonId) + '</select>' +
       '<button class="mini-btn primary" onclick="createNewPage()">+ Neue Seite</button>' +
     '</div>' +
   '</section>' +
@@ -3507,6 +3654,7 @@ function createNewPage() {
     title: p ? p.name : 'Neue Seite', page_order: order, blocks: []
   }).then(function(saved) {
     bookPages.push(saved);
+    layoutPresetPersonId = null;
     openPageEditor(saved.id);
   }).catch(function(err) { alert('Seite konnte nicht angelegt werden: ' + err.message); });
 }

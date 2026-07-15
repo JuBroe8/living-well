@@ -46,7 +46,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--tx); font-s
 .tab-add { margin-left: auto; color: #eee; font-weight: 700 }
 .tab-sep { width: 1px; background: #333; height: 18px; align-self: center; margin: 0 6px; display: none }
 .more-wrap { position: relative }
-.more-menu { display: none; position: absolute; top: 100%; left: 0; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 6px; min-width: 150px; z-index: 50; box-shadow: 0 8px 20px rgba(0,0,0,.35) }
+.more-menu { display: none; position: fixed; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 6px; min-width: 150px; z-index: 200; box-shadow: 0 8px 20px rgba(0,0,0,.35) }
 .more-menu.open { display: block }
 .more-menu button { display: block; width: 100%; text-align: left; background: transparent; border: 0; color: #ccc; font-family: inherit; font-size: 12px; padding: 8px 10px; border-radius: 4px; cursor: pointer }
 .more-menu button:hover { background: #262626; color: #fff }
@@ -743,6 +743,7 @@ function goTab(t) {
   closeMoreMenu();
   if (t !== 'layout') layoutPresetPersonId = null;
   if (t === 'pilot') pilotQueueLimit = 12;
+  if (t === 'status') dashboardQueueLimit = 10;
   document.getElementById('back-btn').classList.remove('vis');
   document.getElementById('tab-sep').style.display = 'none';
   document.getElementById('bar').style.display = (t === 'add' || t === 'status' || t === 'pilot' || t === 'kosten' || t === 'layout') ? 'none' : '';
@@ -756,6 +757,11 @@ function toggleMoreMenu(e) {
   e.stopPropagation();
   var menu = document.getElementById('more-menu');
   var willOpen = !menu.classList.contains('open');
+  if (willOpen) {
+    var r = document.getElementById('more-tab').getBoundingClientRect();
+    menu.style.top = r.bottom + 4 + 'px';
+    menu.style.left = r.left + 'px';
+  }
   menu.classList.toggle('open', willOpen);
   document.getElementById('more-tab').setAttribute('aria-expanded', String(willOpen));
 }
@@ -2643,58 +2649,121 @@ function savePilotFit() {
   }).catch(function(err) { btn.disabled = false; btn.textContent = 'Fit speichern'; alert('Fit konnte nicht gespeichert werden: ' + err.message); });
 }
 
+// Priority mirrors docs/ux-workflow-implementation.md Phase 2: review
+// suggestions, then failed runs, then material-without-dossier, then
+// dossier-without-fit, then shortlist-without-page. Reuses
+// nextActionForPerson() for the last three tiers so this list can never
+// disagree with the pilot queue or the profile CTA about what's next.
+var dashboardQueue = [];
+function personQueueSub(p, key) {
+  var d = dossierModel(p);
+  if (key === 'dossier') return personEntries(p).length + ' Eintr' + (personEntries(p).length === 1 ? 'ag' : 'äge') + ' · Dossier ' + d.count + '/8';
+  if (key === 'fit') return 'Dossier ' + d.count + '/8 · noch nicht bewertet';
+  if (key === 'page') return 'Auf der Shortlist · noch keine Seite gestaltet';
+  return '';
+}
+function buildWorkQueue() {
+  var queue = [], seen = {};
+  researchJobs.filter(function(j) { return j.status === 'failed'; }).slice(-20).forEach(function(j) {
+    var p = personById(j.person_id) || findPersonByName(j.input_name);
+    var name = p ? p.name : (j.input_name || j.raw_input || 'Unbekannt');
+    if (seen[name]) return;
+    seen[name] = true;
+    queue.push({ type: 'failed', name: name, person: p, job: j, label: 'Erneut versuchen', sub: j.last_error ? String(j.last_error) : 'Recherchelauf fehlgeschlagen' });
+  });
+  researchJobs.filter(function(j) { return j.status === 'review'; }).forEach(function(j) {
+    var p = personById(j.person_id) || findPersonByName(j.input_name);
+    var name = p ? p.name : (j.input_name || j.raw_input || 'Unbekannt');
+    if (seen[name]) return;
+    seen[name] = true;
+    queue.push({ type: 'review', name: name, person: p, job: j, label: 'Vorschlag prüfen', sub: 'Rechercheergebnis wartet auf Prüfung' });
+  });
+  var order = { dossier: 0, fit: 1, page: 2 };
+  var personItems = [];
+  persons.forEach(function(p) {
+    if (seen[p.name]) return;
+    var a = nextActionForPerson(p);
+    if (order[a.key] === undefined) return;
+    personItems.push({ type: a.key, name: p.name, person: p, label: a.label, sub: personQueueSub(p, a.key), rank: order[a.key] });
+  });
+  personItems.sort(function(x, y) { return x.rank - y.rank; });
+  personItems.forEach(function(it) { seen[it.name] = true; queue.push(it); });
+  return queue;
+}
+function retryFailedJob(job) {
+  patchSupa('research_jobs', job, { status: 'queued', last_error: null }).then(function(saved) {
+    Object.assign(job, saved || {});
+    render();
+    setTimeout(resumeQueuedResearch, 50);
+  }).catch(function(err) { alert('Erneuter Versuch fehlgeschlagen: ' + err.message); });
+}
+function runQueueAction(item) {
+  if (item.type === 'failed') { if (item.person) showProfile(item.person); retryFailedJob(item.job); return; }
+  if (item.type === 'review') { openResearchJob(item.job.id); return; }
+  if (!item.person) return;
+  if (item.type === 'dossier') { showProfile(item.person); return; }
+  if (item.type === 'fit') { fitBewertenForPerson(item.person); return; }
+  if (item.type === 'page') { openPageWorkshopForPerson(item.person); return; }
+}
+var dashboardQueueLimit = 10;
+function workQueueHtml(queue, limit) {
+  if (!queue.length) return '<div class="readonly-note">Alles erledigt — aktuell wartet keine Aufgabe.</div>';
+  var shown = queue.slice(0, limit);
+  var rows = shown.map(function(item, i) {
+    return '<div class="queue-row">' +
+      '<div>' +
+        '<div class="queue-name">' + esc(item.name) + '</div>' +
+        '<div class="queue-meta">' + esc(item.sub || '') + '</div>' +
+      '</div>' +
+      '<div class="actions"><button class="mini-btn primary" data-queue-action="' + i + '">' + esc(item.label) + '</button></div>' +
+    '</div>';
+  }).join('');
+  var more = queue.length > shown.length ? '<div class="actions" style="margin-top:10px"><button class="mini-btn" id="dash-queue-more">Mehr anzeigen (' + (queue.length - shown.length) + ')</button></div>' : '';
+  return '<div class="queue-list">' + rows + '</div>' + more;
+}
 function rStatus(main) {
   main.innerHTML = '';
-  var models = persons.map(function(p) {
-    var base = personDashboardModel(p);
-    base.dossier = dossierModel(p);
-    base.candidate = candidateFor(p);
-    base.fit = fitScore(base.candidate);
-    return base;
-  });
-  var openJobs = researchJobs.filter(function(j) { return ['captured','queued','running','review'].indexOf(j.status) >= 0; });
+  dashboardQueue = buildWorkQueue();
   var totalCost = aiRuns.reduce(function(sum, x) { return sum + Number(x.estimated_cost_eur || 0); }, 0);
-  var highWork = models.filter(function(m) { return m.counts.total > 0 && m.dossier.count < 7; })
-    .sort(function(a,b) { return (b.counts.total - a.counts.total) || (a.dossier.count - b.dossier.count); }).slice(0,8);
-  var topCandidates = models.filter(function(m) { return m.fit !== null; })
-    .sort(function(a,b) { return b.fit - a.fit; }).slice(0,8);
+  var inFlightJobs = researchJobs.filter(function(j) { return ['captured', 'queued', 'running'].indexOf(j.status) >= 0; });
 
   var wrap = document.createElement('div');
   wrap.innerHTML =
     '<div class="dash-hero">' +
-      '<div class="dash-title">Dein Arbeitsplatz</div>' +
-      '<div class="dash-copy">Schnell Namen sammeln, Recherche prüfen und den Pilotband kuratieren. Der Pool bleibt breit; Auswahl und Dossierfortschritt werden bewusst getrennt.</div>' +
-      '<div class="actions" style="margin-top:14px"><button class="mini-btn primary" onclick="openCapture()">+ Namen erfassen</button><button class="mini-btn" onclick="goTab(\'pilot\')">Pilotband öffnen</button></div>' +
+      '<div class="dash-title">Heute</div>' +
+      '<div class="dash-copy">Eine priorisierte Aufgabe nach der anderen: Vorschläge prüfen, Dossiers vervollständigen, Fit bewerten, Seiten gestalten.</div>' +
+      '<div class="actions" style="margin-top:14px">' +
+        '<button class="mini-btn primary" onclick="openCapture()">+ Namen erfassen</button>' +
+        (dashboardQueue.length ? '<button class="mini-btn" id="dash-next-action">Nächste Aufgabe starten</button>' : '<button class="mini-btn" onclick="goTab(\'pilot\')">Pilotband öffnen</button>') +
+      '</div>' +
     '</div>' +
     '<div class="metric-grid">' +
-      dashMetric(highWork.length, 'Brauchen Dossierarbeit') +
-      dashMetric(openJobs.length, 'Recherche offen') +
-      dashMetric(topCandidates.length, 'Pilot-Fits bewertet') +
+      dashMetric(dashboardQueue.length, 'Offene Aufgaben') +
+      dashMetric(inFlightJobs.length, 'Recherche läuft') +
       dashMetric(formatEuro(totalCost), 'KI-Kosten erfasst') +
     '</div>' +
-    '<div class="dash-grid">' +
-      '<div class="dash-card">' +
-        '<div class="dash-card-hd"><div><div class="dash-card-title">Nächste Dossierarbeit</div><div class="dash-card-note">Viel Material, aber konkrete Pflichtpunkte fehlen.</div></div></div>' +
-        queueList(highWork, true) +
-      '</div>' +
-      '<div class="dash-card">' +
-        '<div class="dash-card-hd"><div><div class="dash-card-title">Stärkste Pilot-Fits</div><div class="dash-card-note">Kuratorische Passung, unabhängig vom Recherchefortschritt.</div></div></div>' +
-        queueList(topCandidates, false) +
-      '</div>' +
+    '<div class="dash-card" style="margin-bottom:16px">' +
+      '<div class="dash-card-hd"><div><div class="dash-card-title">Nächste Aufgaben</div><div class="dash-card-note">Nach Priorität sortiert — oben zuerst erledigen.</div></div></div>' +
+      workQueueHtml(dashboardQueue, dashboardQueueLimit) +
     '</div>' +
-    '<div class="dash-grid">' +
-      '<div class="dash-card">' +
-        '<div class="dash-card-hd"><div><div class="dash-card-title">Recherche-Workflow</div><div class="dash-card-note">Name bleibt gespeichert, auch wenn die Anreicherung scheitert.</div></div></div>' +
-        researchJobsHtml(openJobs) +
-      '</div>' +
-      '<div class="dash-card">' +
-        '<div class="dash-card-hd"><div><div class="dash-card-title">KI-Kosten &amp; Limits</div><div class="dash-card-note">Tagesbudget, Google-Search-Freikontingent und Lauf-Historie.</div></div><button class="mini-btn" onclick="goTab(\'kosten\')">Öffnen</button></div>' +
-        '<div class="readonly-note">' + formatEuro(totalCost) + ' insgesamt erfasst · zuletzt: ' + (aiRuns.length ? esc(aiRuns[aiRuns.length - 1].operation || '') : '—') + '</div>' +
-      '</div>' +
+    (inFlightJobs.length ? '<div class="dash-card" style="margin-bottom:16px">' +
+      '<div class="dash-card-hd"><div><div class="dash-card-title">Recherche läuft gerade</div><div class="dash-card-note">Name bleibt gespeichert, auch wenn die Anreicherung scheitert.</div></div></div>' +
+      researchJobsHtml(inFlightJobs) +
+    '</div>' : '') +
+    '<div class="dash-card">' +
+      '<div class="dash-card-hd"><div><div class="dash-card-title">KI-Kosten &amp; Limits</div><div class="dash-card-note">Tagesbudget, Google-Search-Freikontingent und Lauf-Historie.</div></div><button class="mini-btn" onclick="goTab(\'kosten\')">Öffnen</button></div>' +
+      '<div class="readonly-note">' + formatEuro(totalCost) + ' insgesamt erfasst · zuletzt: ' + (aiRuns.length ? esc(aiRuns[aiRuns.length - 1].operation || '') : '—') + '</div>' +
     '</div>';
 
   main.appendChild(wrap);
   bindDashboardActions(wrap);
+  wrap.querySelectorAll('[data-queue-action]').forEach(function(el) {
+    el.onclick = function() { var item = dashboardQueue[Number(el.getAttribute('data-queue-action'))]; if (item) runQueueAction(item); };
+  });
+  var nextBtn = wrap.querySelector('#dash-next-action');
+  if (nextBtn) nextBtn.onclick = function() { if (dashboardQueue[0]) runQueueAction(dashboardQueue[0]); };
+  var moreBtn = wrap.querySelector('#dash-queue-more');
+  if (moreBtn) moreBtn.onclick = function() { dashboardQueueLimit += 10; render(); };
 }
 
 function formatEuro(n) {
@@ -2929,24 +2998,6 @@ function pipeRow(labelText, n, total) {
   '</div>';
 }
 
-function queueList(items, showEnhance) {
-  if (!items.length) return '<div class="readonly-note">Keine akute Baustelle in dieser Ansicht.</div>';
-  return '<div class="queue-list">' + items.map(function(m) {
-    var gaps = m.gaps.length ? m.gaps.join(', ') : 'gut vorbereitet';
-    return '<div class="queue-row">' +
-      '<div>' +
-        '<div class="queue-name" data-open-person="' + esc(m.person.name) + '">' + esc(m.person.name) + '</div>' +
-        '<div class="queue-meta">' + m.counts.total + ' Einträge · ' + m.counts.A + ' Anekdoten · ' + m.counts.Z + ' Zitate · fehlt: ' + esc(gaps) + '</div>' +
-        '<div class="dossier-row"><span class="pill ' + (m.dossier && m.dossier.count >= 6 ? 'pill-s' : 'pill-q') + '">Dossier ' + (m.dossier ? m.dossier.count : dossierModel(m.person).count) + '/8</span>' + (m.fit !== null && m.fit !== undefined ? '<span class="pill pill-s">Pilot ' + m.fit + '/12</span>' : '') + '</div>' +
-      '</div>' +
-      '<div class="actions">' +
-        (showEnhance ? '<button class="mini-btn primary" data-enhance-person="' + esc(m.person.name) + '">Enhance</button>' : '') +
-        '<button class="mini-btn" data-open-person="' + esc(m.person.name) + '">Öffnen</button>' +
-      '</div>' +
-    '</div>';
-  }).join('') + '</div>';
-}
-
 function personDashboardModel(p) {
   var pe = personEntries(p);
   var c = { A:0, Z:0, F:0, S:0, total:pe.length, direct:0, strong:0, unchecked:0, notes:0 };
@@ -2980,15 +3031,6 @@ function bindDashboardActions(root) {
     el.onclick = function(e) {
       e.stopPropagation();
       showProfileByName(el.getAttribute('data-open-person'));
-    };
-  });
-  root.querySelectorAll('[data-enhance-person]').forEach(function(el) {
-    el.onclick = function(e) {
-      e.stopPropagation();
-      var p = findPersonByName(el.getAttribute('data-enhance-person'));
-      if (!p) return;
-      showProfile(p);
-      setTimeout(startEnhance, 0);
     };
   });
 }

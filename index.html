@@ -2680,6 +2680,21 @@ function personLastActivity(p) {
   });
   return latest;
 }
+// Priority for the page editor's "Aus Eintrag übernehmen" list, per
+// docs/ux-workflow-implementation.md Phase 6: buchreife final > stark,
+// then higher Stärke, then a decided seitenrolle. Open sources are flagged
+// in the option label but not filtered out — curators may still want them.
+function materialSortForBlock(a, b) {
+  var reifeRank = { final: 0, stark: 1, brauchbar: 2, roh: 3 };
+  var ra = reifeRank[a.buchreife] !== undefined ? reifeRank[a.buchreife] : 4;
+  var rb = reifeRank[b.buchreife] !== undefined ? reifeRank[b.buchreife] : 4;
+  if (ra !== rb) return ra - rb;
+  var sa = strength(a), sb = strength(b);
+  if (sa !== sb) return sb - sa;
+  var pa = a.seitenrolle && a.seitenrolle !== 'unentschieden' ? 0 : 1;
+  var pb = b.seitenrolle && b.seitenrolle !== 'unentschieden' ? 0 : 1;
+  return pa - pb;
+}
 function personSortComparator(sortKey) {
   return function(a, b) {
     if (sortKey === 'name') return String(a.name).localeCompare(String(b.name), 'de');
@@ -2782,11 +2797,15 @@ function rPilot(main) {
     list.forEach(function(c) {
       var p = personById(c.person_id); if (!p) return;
       var score = fitScore(c), dossier = dossierModel(p);
-      html += '<button class="candidate-card" data-pilot-person="' + esc(p.id) + '">' +
-        '<div class="candidate-name">' + esc(p.name) + '</div>' +
-        '<div class="candidate-meta">Dossier ' + dossier.count + '/8 · ' + esc(p.kategorie || 'noch ohne Kategorie') + '</div>' +
-        '<span class="fit-pill ' + (score >= 7 ? 'strong' : '') + '">' + (score === null ? 'Noch unbewertet' : score + '/12 · ' + fitLabel(score)) + '</span>' +
-      '</button>';
+      var showPageAction = stage === 'shortlist' && !personHasPage(p);
+      html += '<div class="candidate-card">' +
+        '<div data-pilot-person="' + esc(p.id) + '" style="cursor:pointer">' +
+          '<div class="candidate-name">' + esc(p.name) + '</div>' +
+          '<div class="candidate-meta">Dossier ' + dossier.count + '/8 · ' + esc(p.kategorie || 'noch ohne Kategorie') + '</div>' +
+          '<span class="fit-pill ' + (score >= 7 ? 'strong' : '') + '">' + (score === null ? 'Noch unbewertet' : score + '/12 · ' + fitLabel(score)) + '</span>' +
+        '</div>' +
+        (showPageAction ? '<div class="actions" style="margin-top:8px"><button class="mini-btn" data-page-person="' + esc(p.id) + '">Seite gestalten</button></div>' : '') +
+      '</div>';
     });
     html += '</section>';
   });
@@ -2794,6 +2813,9 @@ function rPilot(main) {
   wrap.innerHTML = html;
   wrap.querySelectorAll('[data-pilot-person]').forEach(function(el) {
     el.onclick = function() { var p = personById(el.getAttribute('data-pilot-person')); if (p) showProfile(p); };
+  });
+  wrap.querySelectorAll('[data-page-person]').forEach(function(el) {
+    el.onclick = function(e) { e.stopPropagation(); var p = personById(el.getAttribute('data-page-person')); if (p) openPageWorkshopForPerson(p); };
   });
   wrap.querySelectorAll('[data-fit-person]').forEach(function(el) {
     el.onclick = function(e) { e.stopPropagation(); var p = personById(el.getAttribute('data-fit-person')); if (p) fitBewertenForPerson(p); };
@@ -3921,6 +3943,8 @@ function openPageEditor(id) {
   var pg = bookPages.find(function(x) { return String(x.id) === String(id); });
   if (!pg) return;
   pg.blocks = Array.isArray(pg.blocks) ? pg.blocks : [];
+  resetPageSaveQueue();
+  blockUndoSnapshot = null;
   layoutState.view = 'editor'; layoutState.page = pg; layoutState.selectedBlockId = null; layoutState.saveStatus = 'saved';
   window.scrollTo(0, 0);
   render();
@@ -3967,15 +3991,43 @@ function deletePage(id) {
   }).catch(function(err) { alert('Seite konnte nicht gelöscht werden: ' + err.message); });
 }
 
+// Every drag/resize/edit called this directly before, so rapid interaction
+// (typing, or a drag immediately followed by a resize) fired overlapping
+// PATCH requests to the same row — whichever response landed last "won",
+// silently discarding a newer edit if its request happened to finish first.
+// Debounce coalesces bursts into one request; the in-flight/pending flags
+// make sure a second save always waits for the first to land instead of
+// running concurrently.
+var pageSaveTimer = null;
+var pageSaveInFlight = false;
+var pageSavePending = false;
+function resetPageSaveQueue() {
+  if (pageSaveTimer) clearTimeout(pageSaveTimer);
+  pageSaveTimer = null; pageSaveInFlight = false; pageSavePending = false;
+}
 function savePageBlocks() {
-  var pg = layoutState.page; if (!pg) return;
   setLayoutSaveStatus('saving');
+  if (pageSaveTimer) clearTimeout(pageSaveTimer);
+  pageSaveTimer = setTimeout(flushPageSave, 400);
+}
+function flushPageSave() {
+  pageSaveTimer = null;
+  if (pageSaveInFlight) { pageSavePending = true; return; }
+  var pg = layoutState.page; if (!pg) return;
+  pageSaveInFlight = true;
   patchSupa('book_pages', pg, { blocks: pg.blocks }).then(function(saved) {
     Object.assign(pg, saved || {});
     var idx = bookPages.findIndex(function(x) { return x.id === pg.id; });
     if (idx >= 0) bookPages[idx] = pg;
-    setLayoutSaveStatus('saved');
-  }).catch(function(err) { setLayoutSaveStatus('error'); console.warn('Seite konnte nicht gespeichert werden:', err.message); });
+    pageSaveInFlight = false;
+    if (pageSavePending) { pageSavePending = false; flushPageSave(); }
+    else setLayoutSaveStatus('saved');
+  }).catch(function(err) {
+    pageSaveInFlight = false;
+    setLayoutSaveStatus('error');
+    console.warn('Seite konnte nicht gespeichert werden:', err.message);
+    if (pageSavePending) { pageSavePending = false; flushPageSave(); }
+  });
 }
 
 function setLayoutSaveStatus(status) {
@@ -4011,6 +4063,7 @@ function renderPageEditorView(main) {
         '<button class="mini-btn" onclick="addBlock(\'text\')">+ Text</button>' +
         '<button class="mini-btn" onclick="addBlock(\'quote\')">+ Zitat</button>' +
         '<button class="mini-btn" onclick="addBlock(\'image\')">+ Bild</button>' +
+        '<button class="mini-btn" onclick="undoLastBlockChange()"' + (blockUndoSnapshot ? '' : ' disabled') + '>Rückgängig</button>' +
       '</div>' +
     '</div>' +
     '<div class="layout-editor-wrap">' +
@@ -4056,6 +4109,22 @@ function mkBlockEl(block) {
   return el;
 }
 
+// Session-only, single-level undo — snapshot taken right before each
+// mutation, restorable via "Letzte Änderung rückgängig" in the toolbar.
+var blockUndoSnapshot = null;
+function snapshotBlocksForUndo() {
+  var pg = layoutState.page; if (!pg) return;
+  blockUndoSnapshot = JSON.parse(JSON.stringify(pg.blocks || []));
+}
+function undoLastBlockChange() {
+  var pg = layoutState.page; if (!pg || !blockUndoSnapshot) return;
+  pg.blocks = blockUndoSnapshot;
+  blockUndoSnapshot = null;
+  layoutState.selectedBlockId = null;
+  renderPageEditorView(document.getElementById('main'));
+  savePageBlocks();
+}
+
 function deselectBlock() {
   layoutState.selectedBlockId = null;
   document.querySelectorAll('.page-block.selected').forEach(function(el) { el.classList.remove('selected'); });
@@ -4071,6 +4140,7 @@ function selectBlock(id) {
 function startDragBlock(e, id) {
   e.preventDefault();
   var block = currentBlock(id); if (!block) return;
+  snapshotBlocksForUndo();
   var startX = e.clientX, startY = e.clientY, origX = block.x, origY = block.y, moved = false;
   var el = document.getElementById('block-' + id);
   function onMove(ev) {
@@ -4092,6 +4162,7 @@ function startResizeBlock(e, id) {
   e.preventDefault(); e.stopPropagation();
   var block = currentBlock(id); if (!block) return;
   selectBlock(id);
+  snapshotBlocksForUndo();
   var startX = e.clientX, startY = e.clientY, origW = block.w, origH = block.h;
   var el = document.getElementById('block-' + id);
   function onMove(ev) {
@@ -4110,6 +4181,7 @@ function startResizeBlock(e, id) {
 
 function addBlock(type) {
   var pg = layoutState.page; if (!pg) return;
+  snapshotBlocksForUndo();
   pg.blocks = pg.blocks || [];
   var block = newBlock(type, pg.blocks.length);
   pg.blocks.push(block);
@@ -4121,8 +4193,9 @@ function addBlock(type) {
 function applyPageTemplate(kind) {
   var pg = layoutState.page; if (!pg) return;
   if ((pg.blocks || []).length && !confirm('Die aktuelle Gestaltung durch diese Vorlage ersetzen?')) return;
+  snapshotBlocksForUndo();
   var p = pg.person_id ? personById(pg.person_id) : null;
-  var pEntries = p ? personEntries(p) : [];
+  var pEntries = p ? personEntries(p).slice().sort(materialSortForBlock) : [];
   var quoteEntry = pEntries.find(function(x) { return x.kategorie === 'Zitat'; });
   var bodyEntry = pEntries.find(function(x) { return x.kategorie !== 'Zitat'; }) || pEntries[0];
   var images = p ? imagesForPerson(p) : [];
@@ -4160,6 +4233,7 @@ function applyPageTemplate(kind) {
 
 function deleteBlock() {
   var pg = layoutState.page; if (!pg || !layoutState.selectedBlockId) return;
+  snapshotBlocksForUndo();
   pg.blocks = (pg.blocks || []).filter(function(b) { return b.id !== layoutState.selectedBlockId; });
   layoutState.selectedBlockId = null;
   renderPageEditorView(document.getElementById('main'));
@@ -4168,6 +4242,7 @@ function deleteBlock() {
 
 function setBlockContent(value) {
   var block = currentBlock(layoutState.selectedBlockId); if (!block) return;
+  snapshotBlocksForUndo();
   block.content = value; block.entryId = null;
   savePageBlocks();
 }
@@ -4175,6 +4250,7 @@ function setBlockContent(value) {
 function pickEntryForBlock(entryId) {
   var block = currentBlock(layoutState.selectedBlockId); if (!block || !entryId) return;
   var x = entries.find(function(e) { return String(e.id) === String(entryId); }); if (!x) return;
+  snapshotBlocksForUndo();
   block.content = entryText(x) || x.preview || '';
   block.entryId = entryId;
   renderPageEditorView(document.getElementById('main'));
@@ -4183,6 +4259,7 @@ function pickEntryForBlock(entryId) {
 
 function setBlockImage(url) {
   var block = currentBlock(layoutState.selectedBlockId); if (!block) return;
+  snapshotBlocksForUndo();
   block.content = normalizeUrl(url);
   renderPageEditorView(document.getElementById('main'));
   savePageBlocks();
@@ -4190,6 +4267,7 @@ function setBlockImage(url) {
 
 function setBlockStyle(key, value) {
   var block = currentBlock(layoutState.selectedBlockId); if (!block) return;
+  snapshotBlocksForUndo();
   block.style = block.style || {};
   block.style[key] = value;
   renderPageEditorView(document.getElementById('main'));
@@ -4232,10 +4310,11 @@ function renderPropsPanel() {
   } else {
     html += '<div class="add-fld"><label class="add-lbl">Inhalt</label><textarea class="ai ai-ta" rows="4" onchange="setBlockContent(this.value)">' + esc(block.content || '') + '</textarea></div>';
     if (layoutState.page.person_id) {
-      var pEntries = personEntries(personById(layoutState.page.person_id));
+      var pEntries = personEntries(personById(layoutState.page.person_id)).slice().sort(materialSortForBlock);
       html += '<div class="add-fld"><label class="add-lbl">Aus Eintrag übernehmen</label><select class="ai ai-sel" onchange="pickEntryForBlock(this.value)"><option value="">— frei —</option>' +
         pEntries.map(function(x) {
-          return '<option value="' + esc(x.id) + '"' + (block.entryId === x.id ? ' selected' : '') + '>' + esc((x.kategorie || '') + ': ' + (entryText(x) || x.preview || '').slice(0, 46)) + '</option>';
+          var flag = entryUnchecked(x) ? ' · Quelle offen' : '';
+          return '<option value="' + esc(x.id) + '"' + (block.entryId === x.id ? ' selected' : '') + '>' + esc((x.kategorie || '') + ': ' + (entryText(x) || x.preview || '').slice(0, 40) + flag) + '</option>';
         }).join('') + '</select></div>';
     }
     html += '<div class="form-grid">' +
